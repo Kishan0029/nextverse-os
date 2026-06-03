@@ -254,6 +254,46 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   #os-name{display:none;}
   .top-dot.green{display:none;}
 }
+
+/* ── DRAGGABLE WINDOWS ── */
+.os-window{
+  position:fixed;top:var(--top-h);bottom:auto;left:0;right:0;
+  width:calc(100% - 48px);max-height:calc(100vh - var(--top-h) - var(--bot-h) - 32px);
+  margin:16px 24px;
+}
+.os-window .window-titlebar{cursor:grab;}
+.os-window .window-titlebar:active{cursor:grabbing;}
+
+/* ── SOUND TOGGLE ── */
+#sound-btn{
+  font-family:var(--font-mono);font-size:0.7rem;
+  color:rgba(0,212,255,0.5);cursor:pointer;
+  padding:4px 8px;border-radius:4px;
+  transition:color 0.2s ease;user-select:none;
+  border:none;background:none;
+}
+#sound-btn:hover{color:var(--c-cyan);}
+#sound-btn.active{color:var(--c-cyan);}
+
+/* ── CUSTOM CONTEXT MENU ── */
+#ctx-menu{
+  position:fixed;z-index:999;min-width:180px;
+  background:rgba(2,11,20,0.97);backdrop-filter:blur(20px);
+  border:1px solid var(--c-border);border-radius:8px;
+  padding:6px 0;pointer-events:all;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6),0 0 0 1px rgba(0,212,255,0.05);
+  animation:windowIn 0.15s ease;
+}
+#ctx-menu.hidden{display:none!important;}
+.ctx-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 16px;cursor:pointer;
+  font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.08em;
+  color:rgba(226,244,255,0.7);transition:background 0.15s ease;
+}
+.ctx-item:hover{background:rgba(0,212,255,0.08);color:var(--c-cyan);}
+.ctx-item .ctx-icon{width:14px;text-align:center;font-size:0.75rem;}
+.ctx-sep{height:1px;background:rgba(0,212,255,0.1);margin:4px 0;}
 </style>
 </head>
 <body>
@@ -304,8 +344,9 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   <div class="bar-center">
     <span id="os-name">NEXTVERSE OS</span>
   </div>
-  <!-- RIGHT: clock -->
+  <!-- RIGHT: clock + sound -->
   <div class="bar-right">
+    <button id="sound-btn" onclick="toggleSound()" title="Toggle ambient sound">🔇</button>
     <span id="clock-display">00:00:00</span>
   </div>
 </div>
@@ -449,6 +490,17 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   </div>
 </div>
 
+<!-- CUSTOM CONTEXT MENU -->
+<div id="ctx-menu" class="hidden">
+  <div class="ctx-item" onclick="ctxAction('refresh')"><span class="ctx-icon">↺</span> REFRESH SYSTEM</div>
+  <div class="ctx-item" onclick="ctxAction('presentations')"><span class="ctx-icon">📁</span> OPEN PRESENTATIONS</div>
+  <div class="ctx-item" onclick="ctxAction('portfolio')"><span class="ctx-icon">📁</span> OPEN PORTFOLIO</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('closeAll')"><span class="ctx-icon">✕</span> CLOSE ALL WINDOWS</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('sound')"><span class="ctx-icon" id="ctx-sound-icon">🔇</span> TOGGLE SOUND</div>
+</div>
+
 <script>
 // ── CLOCK ──
 function tick(){
@@ -457,9 +509,13 @@ function tick(){
 }
 tick();setInterval(tick,1000);
 
-// ── WINDOW MANAGER ──
+// ── WINDOW MANAGER (multi-window) ──
 function openWindow(id){
-  document.getElementById('win-'+id).classList.remove('hidden');
+  const win=document.getElementById('win-'+id);
+  win.classList.remove('hidden');
+  // bring to front
+  document.querySelectorAll('.os-window').forEach(w=>w.style.zIndex=20);
+  win.style.zIndex=21;
   document.getElementById('folder-'+id)?.classList.add('selected');
   document.getElementById('path-display').textContent=`~/nextverse/desktop/${id}/`;
   document.getElementById('bottom-path').textContent=`~/${id}`;
@@ -504,6 +560,70 @@ function enterOS(){
   bs.classList.add('fade-out');
   setTimeout(()=>bs.remove(),900);
 }
+
+// ── SOUND TOGGLE ──
+const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+let soundOn=false,gainNode=null,oscNode=null;
+function startAmbient(){
+  gainNode=audioCtx.createGain();gainNode.gain.setValueAtTime(0,audioCtx.currentTime);gainNode.gain.linearRampToValueAtTime(0.03,audioCtx.currentTime+2);
+  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*4,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
+  const src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+  const flt=audioCtx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=400;
+  src.connect(flt);flt.connect(gainNode);gainNode.connect(audioCtx.destination);
+  src.start();oscNode=src;
+}
+function stopAmbient(){if(gainNode){gainNode.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1);setTimeout(()=>{try{oscNode.stop();}catch(e){}},1200);}}
+function toggleSound(){
+  soundOn=!soundOn;
+  const btn=document.getElementById('sound-btn');
+  const ico=document.getElementById('ctx-sound-icon');
+  if(soundOn){if(audioCtx.state==='suspended')audioCtx.resume();startAmbient();btn.textContent='🔊';btn.classList.add('active');if(ico)ico.textContent='🔊';}
+  else{stopAmbient();btn.textContent='🔇';btn.classList.remove('active');if(ico)ico.textContent='🔇';}
+}
+
+// ── CONTEXT MENU ──
+const ctxMenu=document.getElementById('ctx-menu');
+document.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  ctxMenu.classList.remove('hidden');
+  const x=Math.min(e.clientX,window.innerWidth-200);
+  const y=Math.min(e.clientY,window.innerHeight-200);
+  ctxMenu.style.left=x+'px';ctxMenu.style.top=y+'px';
+});
+document.addEventListener('click',()=>ctxMenu.classList.add('hidden'));
+function ctxAction(a){
+  ctxMenu.classList.add('hidden');
+  if(a==='refresh')location.reload();
+  else if(a==='presentations')openWindow('presentations');
+  else if(a==='portfolio')openWindow('portfolio');
+  else if(a==='closeAll'){closeWindow('presentations');closeWindow('portfolio');}
+  else if(a==='sound')toggleSound();
+}
+
+// ── DRAGGABLE WINDOWS ──
+document.querySelectorAll('.os-window').forEach(win=>{
+  const bar=win.querySelector('.window-titlebar');
+  let dragging=false,ox=0,oy=0;
+  bar.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('wctrl')||e.target.classList.contains('win-back'))return;
+    dragging=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;
+    win.style.right='auto';win.style.bottom='auto';
+    win.style.margin='0';
+    // bring to front
+    document.querySelectorAll('.os-window').forEach(w=>w.style.zIndex=20);
+    win.style.zIndex=21;
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    let nx=e.clientX-ox,ny=e.clientY-oy;
+    nx=Math.max(0,Math.min(nx,window.innerWidth-win.offsetWidth));
+    ny=Math.max(0,Math.min(ny,window.innerHeight-win.offsetHeight));
+    win.style.left=nx+'px';win.style.top=ny+'px';
+  });
+  document.addEventListener('mouseup',()=>dragging=false);
+});
 
 // ── PARTICLE NETWORK ──
 (()=>{
