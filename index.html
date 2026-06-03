@@ -294,6 +294,28 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 .ctx-item:hover{background:rgba(0,212,255,0.08);color:var(--c-cyan);}
 .ctx-item .ctx-icon{width:14px;text-align:center;font-size:0.75rem;}
 .ctx-sep{height:1px;background:rgba(0,212,255,0.1);margin:4px 0;}
+
+/* ── PHASE 3: LOCK SCREEN ── */
+#lock-screen{
+  position:fixed;inset:0;z-index:998;
+  background:rgba(2,11,20,0.97);backdrop-filter:blur(30px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  transition:opacity 0.6s ease;
+}
+#lock-screen.fade-out{opacity:0;pointer-events:none;}
+.lock-time{font-family:var(--font-hud);font-size:clamp(2.5rem,8vw,5rem);color:var(--c-cyan);letter-spacing:0.05em;}
+.lock-date{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.2em;color:rgba(0,212,255,0.5);}
+.scan-ring-wrap{position:relative;width:120px;height:120px;cursor:pointer;}
+.scan-ring{width:100%;height:100%;border-radius:50%;border:2px solid rgba(0,212,255,0.3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:border-color 0.3s ease;}
+.scan-ring-wrap:hover .scan-ring{border-color:var(--c-cyan);}
+.scan-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0deg,rgba(0,212,255,0.3) 60deg,transparent 120deg);animation:rotateScan 2s linear infinite;}
+@keyframes rotateScan{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.scan-ring-inner{width:60px;height:60px;border-radius:50%;border:1px solid rgba(0,212,255,0.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem;z-index:1;}
+.lock-label{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.18em;color:rgba(0,212,255,0.5);}
+.scan-success{color:var(--c-green)!important;}
+#sound-btn,#lock-btn{font-family:var(--font-mono);font-size:0.7rem;color:rgba(0,212,255,0.5);cursor:pointer;padding:4px 8px;border-radius:4px;transition:color 0.2s ease;border:none;background:none;}
+#sound-btn:hover,#lock-btn:hover{color:var(--c-cyan);}
+#sound-btn.active{color:var(--c-cyan);}
 </style>
 </head>
 <body>
@@ -344,9 +366,10 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   <div class="bar-center">
     <span id="os-name">NEXTVERSE OS</span>
   </div>
-  <!-- RIGHT: clock + sound -->
+  <!-- RIGHT: sound + lock + clock -->
   <div class="bar-right">
     <button id="sound-btn" onclick="toggleSound()" title="Toggle ambient sound">🔇</button>
+    <button id="lock-btn" onclick="lockOS()" title="Lock">🔒</button>
     <span id="clock-display">00:00:00</span>
   </div>
 </div>
@@ -409,13 +432,10 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 <!-- WINDOW: PRESENTATIONS -->
 <div class="os-window hidden" id="win-presentations">
   <div class="window-titlebar">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div class="window-controls">
-        <div class="wctrl close" onclick="closeWindow('presentations')" title="Close"></div>
-        <div class="wctrl min" title="Minimize"></div>
-        <div class="wctrl max" title="Maximize"></div>
-      </div>
-      <div class="win-back" onclick="closeWindow('presentations')">← BACK</div>
+    <div class="window-controls">
+      <div class="wctrl close" onclick="closeWindow('presentations')" title="Close"></div>
+      <div class="wctrl min" title="Minimize"></div>
+      <div class="wctrl max" title="Maximize"></div>
     </div>
     <span class="window-title">📁 PRESENTATIONS</span>
     <span style="font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.35);">1 ITEM</span>
@@ -440,13 +460,10 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 <!-- WINDOW: PORTFOLIO -->
 <div class="os-window hidden" id="win-portfolio">
   <div class="window-titlebar">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div class="window-controls">
-        <div class="wctrl close" onclick="closeWindow('portfolio')" title="Close"></div>
-        <div class="wctrl min" title="Minimize"></div>
-        <div class="wctrl max" title="Maximize"></div>
-      </div>
-      <div class="win-back" onclick="closeWindow('portfolio')">← BACK</div>
+    <div class="window-controls">
+      <div class="wctrl close" onclick="closeWindow('portfolio')" title="Close"></div>
+      <div class="wctrl min" title="Minimize"></div>
+      <div class="wctrl max" title="Maximize"></div>
     </div>
     <span class="window-title">📁 PORTFOLIO</span>
     <span style="font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.35);">3 ITEMS</span>
@@ -488,6 +505,18 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
     </a>
 
   </div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen" class="hidden">
+  <div class="lock-time" id="lock-clock">00:00</div>
+  <div class="lock-date" id="lock-date"></div>
+  <div class="scan-ring-wrap" onclick="unlockOS()">
+    <div class="scan-ring">
+      <div class="scan-ring-inner">👤</div>
+    </div>
+  </div>
+  <div class="lock-label" id="lock-label">TOUCH TO AUTHENTICATE</div>
 </div>
 
 <!-- CUSTOM CONTEXT MENU -->
@@ -561,25 +590,30 @@ function enterOS(){
   setTimeout(()=>bs.remove(),900);
 }
 
-// ── SOUND TOGGLE ──
-const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-let soundOn=false,gainNode=null,oscNode=null;
+// ── SOUND TOGGLE (oscillator drone) ──
+let audioCtx=null,soundOn=false,gainNode=null,oscs=[];
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
 function startAmbient(){
-  gainNode=audioCtx.createGain();gainNode.gain.setValueAtTime(0,audioCtx.currentTime);gainNode.gain.linearRampToValueAtTime(0.03,audioCtx.currentTime+2);
-  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*4,audioCtx.sampleRate);
-  const d=buf.getChannelData(0);
-  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
-  const src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
-  const flt=audioCtx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=400;
-  src.connect(flt);flt.connect(gainNode);gainNode.connect(audioCtx.destination);
-  src.start();oscNode=src;
+  initAudio();if(audioCtx.state==='suspended')audioCtx.resume();
+  gainNode=audioCtx.createGain();gainNode.gain.setValueAtTime(0,audioCtx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.04,audioCtx.currentTime+2);
+  gainNode.connect(audioCtx.destination);
+  [[55,0],[110,0.02],[220,-0.02]].forEach(([freq,det])=>{
+    const o=audioCtx.createOscillator();
+    o.type='sine';o.frequency.value=freq+det;
+    const g=audioCtx.createGain();g.gain.value=0.4;
+    o.connect(g);g.connect(gainNode);o.start();oscs.push(o);
+  });
 }
-function stopAmbient(){if(gainNode){gainNode.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1);setTimeout(()=>{try{oscNode.stop();}catch(e){}},1200);}}
+function stopAmbient(){
+  if(gainNode){gainNode.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1.5);
+  setTimeout(()=>{oscs.forEach(o=>{try{o.stop();}catch(e){}});oscs=[];},1600);}
+}
 function toggleSound(){
   soundOn=!soundOn;
   const btn=document.getElementById('sound-btn');
   const ico=document.getElementById('ctx-sound-icon');
-  if(soundOn){if(audioCtx.state==='suspended')audioCtx.resume();startAmbient();btn.textContent='🔊';btn.classList.add('active');if(ico)ico.textContent='🔊';}
+  if(soundOn){startAmbient();btn.textContent='🔊';btn.classList.add('active');if(ico)ico.textContent='🔊';}
   else{stopAmbient();btn.textContent='🔇';btn.classList.remove('active');if(ico)ico.textContent='🔇';}
 }
 
@@ -602,16 +636,58 @@ function ctxAction(a){
   else if(a==='sound')toggleSound();
 }
 
+// ── PHASE 3: LOCK SCREEN ──
+function updateLockClock(){
+  const n=new Date(),pad=v=>String(v).padStart(2,'0');
+  document.getElementById('lock-clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('lock-date').textContent=`${days[n.getDay()]} · ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+}
+updateLockClock();setInterval(updateLockClock,30000);
+function lockOS(){
+  updateLockClock();
+  const ls=document.getElementById('lock-screen');
+  ls.classList.remove('hidden');
+  document.getElementById('lock-label').textContent='TOUCH TO AUTHENTICATE';
+  document.getElementById('lock-label').classList.remove('scan-success');
+}
+function unlockOS(){
+  const lbl=document.getElementById('lock-label');
+  lbl.textContent='SCANNING... IDENTITY CONFIRMED ✔';
+  lbl.classList.add('scan-success');
+  setTimeout(()=>{
+    const ls=document.getElementById('lock-screen');
+    ls.classList.add('fade-out');
+    setTimeout(()=>{ls.classList.add('hidden');ls.classList.remove('fade-out');},700);
+  },900);
+}
+
+// ── PHASE 3: THEME SWITCHER ──
+const THEMES=[
+  {name:'CYAN',   cyan:'#00d4ff',green:'#00ff88',violet:'#7c3aed'},
+  {name:'AMBER',  cyan:'#ffb830',green:'#ff6b35',violet:'#d97706'},
+  {name:'MATRIX', cyan:'#00ff88',green:'#00d4ff',violet:'#22c55e'},
+];
+let themeIdx=0;
+function cycleTheme(){
+  themeIdx=(themeIdx+1)%THEMES.length;
+  const t=THEMES[themeIdx];
+  const r=document.documentElement.style;
+  r.setProperty('--c-cyan',t.cyan);
+  r.setProperty('--c-green',t.green);
+  r.setProperty('--c-violet',t.violet);
+  document.getElementById('theme-btn').textContent=t.name;
+}
+
 // ── DRAGGABLE WINDOWS ──
 document.querySelectorAll('.os-window').forEach(win=>{
   const bar=win.querySelector('.window-titlebar');
   let dragging=false,ox=0,oy=0;
   bar.addEventListener('mousedown',e=>{
-    if(e.target.classList.contains('wctrl')||e.target.classList.contains('win-back'))return;
+    if(e.target.classList.contains('wctrl'))return;
     dragging=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;
-    win.style.right='auto';win.style.bottom='auto';
-    win.style.margin='0';
-    // bring to front
+    win.style.right='auto';win.style.bottom='auto';win.style.margin='0';
     document.querySelectorAll('.os-window').forEach(w=>w.style.zIndex=20);
     win.style.zIndex=21;
   });
