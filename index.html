@@ -319,7 +319,7 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 
 /* ── PHASE 4: WEATHER WIDGET ── */
 #weather-widget{
-  position:absolute;bottom:20px;right:24px;
+  position:absolute;bottom:calc(var(--bot-h) + 16px);right:24px;
   display:flex;flex-direction:column;gap:6px;
   background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);
   border-radius:10px;padding:12px 16px;min-width:160px;
@@ -390,9 +390,9 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
     <span class="sys-label">SYS</span>
     <span class="sys-val" style="color:var(--c-green);">● ONLINE</span>
   </div>
-  <!-- CENTER: OS name -->
+  <!-- CENTER: Logo -->
   <div class="bar-center">
-    <span id="os-name">NEXTVERSE OS</span>
+    <img src="Nextverse Logo.png" alt="Nextverse" style="height:18px;opacity:0.9;filter:drop-shadow(0 0 6px rgba(0,212,255,0.4));border:none;border-radius:0;">
   </div>
   <!-- RIGHT: sound + lock + clock -->
   <div class="bar-right">
