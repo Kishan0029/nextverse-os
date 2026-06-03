@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI UNLOCKED — Nextverse × School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#020408;
+  --c-cyan:#00d4ff;
+  --c-blue:#0066ff;
+  --c-violet:#7c3aed;
+  --c-green:#00ff88;
+  --c-orange:#ff6b35;
+  --c-yellow:#ffd700;
+  --c-pink:#ff0099;
+  --c-text:#e2f4ff;
+  --c-dim:rgba(0,212,255,0.5);
+  --c-glass:rgba(0,212,255,0.04);
+  --c-border:rgba(0,212,255,0.15);
+  --font-hud:'Orbitron',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --font-body:'Inter',sans-serif;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--c-bg);color:var(--c-text)}
+body{font-family:var(--font-body);cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%2300d4ff" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="%2300d4ff"/><path d="M12 0v4M12 20v4M0 12h4M20 12h4" stroke="%2300d4ff" stroke-width="1.5"/></svg>') 12 12, crosshair;}
+
+/* ── PRESENTATION CONTAINER ── */
+#deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+
+/* ── SLIDES ── */
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.6s ease;
+  padding:2rem 4rem;
+  z-index:1;
+}
+.slide.active{opacity:1;pointer-events:all}
+.slide.exit-left{animation:slideExitLeft 0.5s ease forwards}
+.slide.enter-right{animation:slideEnterRight 0.5s ease forwards}
+
+@keyframes slideExitLeft{to{opacity:0;transform:translateX(-60px)}}
+@keyframes slideEnterRight{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── GLOBAL BG LAYERS ── */
+#bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:50px 50px;
+}
+#bg-scan{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(transparent 50%,rgba(0,212,255,0.012) 50%);
+  background-size:100% 4px;
+  animation:scanRoll 8s linear infinite;
+}
+@keyframes scanRoll{0%{background-position:0 0}100%{background-position:0 100vh}}
+
+#bg-vignette{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(2,4,8,0.9) 100%);
+}
+#bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(100px);
+  animation:orbPulse 12s ease-in-out infinite;
+}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(0,102,255,0.12),transparent 70%);top:-100px;left:-100px;animation-delay:0s}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(0,212,255,0.10),transparent 70%);bottom:-50px;right:-50px;animation-delay:-6s}
+.orb3{width:400px;height:400px;background:radial-gradient(circle,rgba(124,58,237,0.08),transparent 70%);top:30%;right:20%;animation-delay:-3s}
+@keyframes orbPulse{0%,100%{transform:scale(1);opacity:0.8}50%{transform:scale(1.15);opacity:1}}
+
+/* ── HUD CORNER DECORATIONS ── */
+.hud-corner{position:fixed;width:80px;height:80px;z-index:2;pointer-events:none}
+.hud-corner.tl{top:20px;left:20px;border-top:2px solid var(--c-cyan);border-left:2px solid var(--c-cyan)}
+.hud-corner.tr{top:20px;right:20px;border-top:2px solid var(--c-cyan);border-right:2px solid var(--c-cyan)}
+.hud-corner.bl{bottom:45px;left:20px;border-bottom:2px solid var(--c-cyan);border-left:2px solid var(--c-cyan)}
+.hud-corner.br{bottom:45px;right:20px;border-bottom:2px solid var(--c-cyan);border-right:2px solid var(--c-cyan)}
+
+/* ── HUD STATUS BAR ── */
+#hud-bar{
+  position:fixed;bottom:0;left:0;right:0;height:36px;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;
+  background:rgba(0,212,255,0.03);
+  border-top:1px solid rgba(0,212,255,0.1);
+  font-family:var(--font-mono);font-size:0.65rem;color:var(--c-dim);
+}
+#hud-bar .left{display:flex;gap:2rem}
+#hud-bar .center{display:flex;gap:6px;align-items:center}
+.progress-dot{width:6px;height:6px;border-radius:50%;background:rgba(0,212,255,0.2);transition:all 0.3s}
+.progress-dot.done{background:var(--c-cyan)}
+.progress-dot.active{background:var(--c-cyan);box-shadow:0 0 8px var(--c-cyan);transform:scale(1.4)}
+#hud-bar .right{display:flex;gap:2rem}
+
+/* ── TYPOGRAPHY ── */
+.hud-label{
+  font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.2em;
+  color:var(--c-cyan);text-transform:uppercase;margin-bottom:1rem;
+  display:flex;align-items:center;gap:8px;
+}
+.hud-label::before{content:"";display:inline-block;width:16px;height:1px;background:var(--c-cyan)}
+.hud-label::after{content:"";display:inline-block;width:16px;height:1px;background:var(--c-cyan)}
+
+.hero-title{
+  font-family:var(--font-hud);
+  font-size:clamp(2.5rem,6vw,6rem);
+  font-weight:900;
+  line-height:1.05;
+  letter-spacing:0.02em;
+  text-align:center;
+}
+.hero-sub{
+  font-family:var(--font-body);
+  font-size:clamp(1rem,2vw,1.4rem);
+  font-weight:300;
+  color:rgba(226,244,255,0.6);
+  text-align:center;
+  letter-spacing:0.05em;
+}
+.grad-cyan{background:linear-gradient(135deg,var(--c-cyan),var(--c-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-green{background:linear-gradient(135deg,var(--c-green),var(--c-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-fire{background:linear-gradient(135deg,var(--c-yellow),var(--c-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-violet{background:linear-gradient(135deg,var(--c-violet),var(--c-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ── GLASS PANELS ── */
+.panel{
+  background:var(--c-glass);
+  border:1px solid var(--c-border);
+  border-radius:8px;
+  backdrop-filter:blur(10px);
+  position:relative;overflow:hidden;
+}
+.panel::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--c-cyan),transparent);
+}
+.panel-glow{box-shadow:0 0 30px rgba(0,212,255,0.08),inset 0 0 30px rgba(0,212,255,0.02)}
+.panel-glow-strong{box-shadow:0 0 60px rgba(0,212,255,0.15),inset 0 0 40px rgba(0,212,255,0.05)}
+
+/* ── HUD RINGS (Arc Reactor style) ── */
+.hud-ring-container{position:relative;display:flex;align-items:center;justify-content:center}
+.hud-ring{
+  position:absolute;border-radius:50%;border:1px solid;
+  animation:ringRotate 8s linear infinite;
+}
+.hud-ring:nth-child(2){animation-direction:reverse;animation-duration:12s}
+.hud-ring:nth-child(3){animation-duration:6s}
+@keyframes ringRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── PILL TAGS ── */
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:3px;
+  font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.1em;
+  border:1px solid;
+}
+.tag-cyan{background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:var(--c-cyan)}
+.tag-green{background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--c-green)}
+.tag-orange{background:rgba(255,107,53,0.08);border-color:rgba(255,107,53,0.3);color:var(--c-orange)}
+.tag-violet{background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.4);color:#a78bfa}
+.tag-pink{background:rgba(255,0,153,0.08);border-color:rgba(255,0,153,0.3);color:var(--c-pink)}
+.tag-yellow{background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.3);color:var(--c-yellow)}
+
+/* ── ALERT/CHALLENGE BOX ── */
+.alert-box{
+  padding:24px 32px;border-radius:4px;
+  background:rgba(0,212,255,0.05);
+  border:1px solid rgba(0,212,255,0.2);
+  border-left:3px solid var(--c-cyan);
+  position:relative;
+}
+.alert-box::after{
+  content:"";position:absolute;bottom:0;right:0;
+  width:40px;height:40px;
+  border-bottom:1px solid rgba(0,212,255,0.3);
+  border-right:1px solid rgba(0,212,255,0.3);
+}
+
+/* ── GRID LAYOUTS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.grid-6{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;width:100%}
+
+/* ── CARD ── */
+.card{
+  padding:24px 20px;border-radius:6px;
+  background:rgba(0,212,255,0.03);
+  border:1px solid rgba(0,212,255,0.1);
+  transition:all 0.3s ease;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c-cyan),var(--c-blue));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.3s ease;
+}
+.card:hover::before{transform:scaleX(1)}
+.card:hover{background:rgba(0,212,255,0.07);border-color:rgba(0,212,255,0.25);transform:translateY(-3px)}
+
+/* ── PROMPT BLOCK ── */
+.prompt{
+  background:rgba(0,0,0,0.6);
+  border:1px solid rgba(0,212,255,0.2);
+  border-radius:4px;
+  padding:14px 18px;
+  font-family:var(--font-mono);font-size:0.8rem;
+  color:var(--c-green);
+  position:relative;
+}
+.prompt::before{
+  content:"›_";
+  color:var(--c-cyan);margin-right:8px;font-weight:700;
+}
+.prompt.bad{border-color:rgba(255,50,50,0.3);color:#ff6b6b}
+.prompt.bad::before{content:"✗";color:#ff4444}
+.prompt.good{border-color:rgba(0,255,136,0.3);color:var(--c-green)}
+.prompt.good::before{content:"✓";color:var(--c-green)}
+
+/* ── NUMBER BADGE ── */
+.num-badge{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:700;font-size:0.85rem;
+  background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);
+  color:var(--c-cyan);
+}
+
+/* ── VOTE BARS ── */
+.vote-bar-wrap{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--c-cyan),var(--c-blue));border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* ── AWARD CARD ── */
+.award-card{
+  padding:20px 14px;border-radius:6px;text-align:center;
+  background:rgba(0,0,0,0.4);border:1px solid rgba(0,212,255,0.1);
+  transition:all 0.3s ease;
+}
+.award-card:hover{background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.3);transform:translateY(-4px)}
+.award-icon{font-size:2.2rem;margin-bottom:8px}
+.award-name{font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.12em;font-weight:700;margin-bottom:4px}
+.award-desc{font-size:0.72rem;color:rgba(226,244,255,0.45);line-height:1.4}
+
+/* ── ROUND INDICATOR ── */
+.round-badge{
+  padding:8px 24px;border:1px solid var(--c-cyan);
+  font-family:var(--font-mono);font-size:0.75rem;letter-spacing:0.15em;
+  color:var(--c-cyan);border-radius:2px;
+  background:rgba(0,212,255,0.06);
+  text-transform:uppercase;
+}
+
+/* ── TIMELINE / STEPS ── */
+.step{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-radius:4px;background:rgba(0,212,255,0.03);border:1px solid rgba(0,212,255,0.08)}
+
+/* ── SCAN LINE ON HOVER ── */
+.scan-anim::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(transparent 40%,rgba(0,212,255,0.05) 50%,transparent 60%);
+  background-size:100% 200%;
+  animation:scanDown 3s linear infinite;
+  pointer-events:none;
+}
+@keyframes scanDown{0%{background-position:0 -100%}100%{background-position:0 200%}}
+
+/* ── ENTER ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeScale{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 20px rgba(0,212,255,0.3)}50%{text-shadow:0 0 50px rgba(0,212,255,0.7),0 0 100px rgba(0,212,255,0.3)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes drawLine{from{width:0}to{width:100%}}
+@keyframes hexSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.slide.active .anim-1{animation:fadeUp 0.6s 0.1s both ease}
+.slide.active .anim-2{animation:fadeUp 0.6s 0.25s both ease}
+.slide.active .anim-3{animation:fadeUp 0.6s 0.4s both ease}
+.slide.active .anim-4{animation:fadeUp 0.6s 0.55s both ease}
+.slide.active .anim-5{animation:fadeUp 0.6s 0.7s both ease}
+.slide.active .anim-scale{animation:fadeScale 0.7s 0.2s both ease}
+
+/* ── ARC REACTOR SVG ANIMATION ── */
+#arc-reactor{position:absolute;right:6%;top:50%;transform:translateY(-50%);opacity:0.15;pointer-events:none}
+
+/* ── NAV ARROWS ── */
+.nav-arrow{
+  position:fixed;top:50%;transform:translateY(-50%);
+  z-index:20;width:44px;height:44px;border-radius:50%;
+  background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--c-cyan);font-size:1.1rem;
+  transition:all 0.2s ease;font-family:var(--font-mono);
+}
+.nav-arrow:hover{background:rgba(0,212,255,0.15);border-color:var(--c-cyan);box-shadow:0 0 20px rgba(0,212,255,0.3)}
+#nav-prev{left:16px}
+#nav-next{right:16px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .slide{padding:1rem 1.5rem}
+  .grid-3,.grid-4,.grid-5,.grid-6{grid-template-columns:1fr 1fr}
+  .split{grid-template-columns:1fr;gap:1.5rem}
+  .hero-title{font-size:2.2rem}
+}
+
+/* ── TYPING CURSOR ── */
+.cursor{display:inline-block;width:2px;height:1em;background:var(--c-cyan);margin-left:4px;animation:blink 1s infinite}
+
+/* ── MISC ── */
+img{border-radius:8px;max-width:100%;border:1px solid rgba(0,212,255,0.15)}
+</style>
+</head>
+<body>
+
+<!-- BG LAYERS -->
+<div id="bg-grid"></div>
+<div id="bg-scan"></div>
+<div id="bg-vignette"></div>
+<div id="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<!-- HUD CORNERS -->
+<div class="hud-corner tl"></div>
+<div class="hud-corner tr"></div>
+<div class="hud-corner bl"></div>
+<div class="hud-corner br"></div>
+
+<!-- NAV -->
+<div class="nav-arrow" id="nav-prev" onclick="prevSlide()">&#8592;</div>
+<div class="nav-arrow" id="nav-next" onclick="nextSlide()">&#8594;</div>
+
+
+<!-- HUD BAR -->
+<div id="hud-bar">
+  <div class="left" style="align-items: center;">
+    <span style="letter-spacing: 0.15em; color: var(--c-cyan);">NEXTVERSE</span>
+    <span id="hud-time"></span>
+  </div>
+  <div class="center" id="progress-dots"></div>
+  <div class="right">
+    <span id="hud-slide-num">01 / 20</span>
+    <span>SYSTEM ONLINE</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE DECK
+     ═══════════════════════════════════════════════════════ -->
+<div id="deck">
+
+<!-- ──────────────────────────────────
+     SLIDE 00 — PRE-SHOW
+────────────────────────────────── -->
+<section class="slide active" id="s0">
+  <svg id="arc-reactor" width="400" height="400" viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(0,212,255,0.4)" stroke-width="1" stroke-dasharray="8 12"/>
+    <circle cx="200" cy="200" r="150" fill="none" stroke="rgba(0,102,255,0.5)" stroke-width="1"/>
+    <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(0,212,255,0.3)" stroke-width="0.5" stroke-dasharray="4 8"/>
+    <circle cx="200" cy="200" r="80" fill="none" stroke="rgba(0,212,255,0.6)" stroke-width="1"/>
+    <circle cx="200" cy="200" r="40" fill="rgba(0,212,255,0.05)" stroke="rgba(0,212,255,0.8)" stroke-width="1.5"/>
+    <circle cx="200" cy="200" r="15" fill="rgba(0,212,255,0.2)"/>
+    <style>
+      #arc-reactor circle:nth-child(1){animation:hexSpin 30s linear infinite}
+      #arc-reactor circle:nth-child(3){animation:hexSpin 20s linear infinite reverse}
+    </style>
+  </svg>
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// SYSTEM INITIALIZING</div>
+  <h1 class="hero-title anim-2" style="font-size:clamp(3rem,7vw,7rem);">
+    THE FUTURE OF<br><span class="grad-cyan">INTELLIGENCE</span><br>IS ALREADY HERE.
+  </h1>
+  <p class="hero-sub anim-3" style="margin-top:1.5rem;max-width:600px;letter-spacing:0.08em">
+    A LIVE AI EXPERIENCE · NEXTVERSE × SCHOOL SESSION
+  </p>
+  <div class="anim-4" style="display:flex;gap:12px;margin-top:2rem;flex-wrap:wrap;justify-content:center">
+    <span class="tag tag-cyan">🤖 MACHINE LEARNING</span>
+    <span class="tag tag-green">🎨 GENERATIVE AI</span>
+    <span class="tag tag-violet">🧠 NEURAL NETWORKS</span>
+    <span class="tag tag-orange">🚗 AUTONOMOUS SYSTEMS</span>
+  </div>
+  <div class="anim-5" style="margin-top:2.5rem;font-family:var(--font-mono);font-size:0.7rem;color:var(--c-dim);letter-spacing:0.15em">
+    DISPLAY WHILE STUDENTS ENTER · AMBIENT MODE ACTIVE<span class="cursor"></span>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 01 — OPENING HOOK
+────────────────────────────────── -->
+<section class="slide" id="s1">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// AUDIENCE INTERACTION · SECTION 01</div>
+  <h2 class="hero-title anim-2">QUICK<br><span class="grad-cyan">QUESTION.</span></h2>
+  <div class="grid-2 anim-3" style="margin-top:2rem;width:min(780px,90vw);gap:20px">
+    <div class="card scan-anim" style="padding:32px;text-align:center;cursor:pointer" onclick="this.style.borderColor='rgba(0,212,255,0.6)';this.style.background='rgba(0,212,255,0.1)'">
+      <div style="font-size:3.5rem;margin-bottom:14px">🙋</div>
+      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--c-cyan);margin-bottom:6px">RAISE YOUR HAND</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.95rem">Who has used ChatGPT?</div>
+    </div>
+    <div class="card scan-anim" style="padding:32px;text-align:center;cursor:pointer" onclick="this.style.borderColor='rgba(0,255,136,0.6)';this.style.background='rgba(0,255,136,0.06)'">
+      <div style="font-size:3.5rem;margin-bottom:14px">📱</div>
+      <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--c-green);margin-bottom:6px">RAISE YOUR HAND</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.95rem">Who used AI today without knowing?</div>
+    </div>
+  </div>
+  <div class="alert-box anim-4" style="margin-top:2rem;max-width:680px;text-align:center">
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:10px">⚡ PLOT TWIST DETECTED</div>
+    <div style="font-size:1.15rem;line-height:1.7">Most of you used AI today <strong style="color:var(--c-cyan)">without even realizing it.</strong></div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 02 — FIRST WOW SETUP
+────────────────────────────────── -->
+<section class="slide" id="s2">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// LIVE CHALLENGE · ROUND ZERO</div>
+  <h2 class="hero-title anim-2">YOU ARE THE<br><span class="grad-fire">DIRECTOR.</span></h2>
+  <p class="hero-sub anim-3" style="margin-top:1rem">Give me 3 things. AI creates something with them.</p>
+  <div class="grid-3 anim-4" style="margin-top:2rem;width:min(820px,92vw)">
+    <div class="panel panel-glow" style="padding:28px 20px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">🐯</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:8px">INPUT 01</div>
+      <div style="font-size:1.2rem;font-weight:700">AN ANIMAL</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.85rem;margin-top:4px">Any creature</div>
+    </div>
+    <div class="panel panel-glow" style="padding:28px 20px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">🦸</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:8px">INPUT 02</div>
+      <div style="font-size:1.2rem;font-weight:700">A SUPERHERO</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.85rem;margin-top:4px">Any universe</div>
+    </div>
+    <div class="panel panel-glow" style="padding:28px 20px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">🌍</div>
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:8px">INPUT 03</div>
+      <div style="font-size:1.2rem;font-weight:700">A LOCATION</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.85rem;margin-top:4px">Anywhere on Earth</div>
+    </div>
+  </div>
+  <div class="anim-5" style="margin-top:1.5rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <span style="font-family:var(--font-mono);font-size:0.75rem;color:rgba(226,244,255,0.4)">EXAMPLE ›</span>
+    <span class="tag tag-orange">🐯 Tiger</span>
+    <span style="color:rgba(226,244,255,0.3)">+</span>
+    <span class="tag tag-cyan">🦸 Iron Man</span>
+    <span style="color:rgba(226,244,255,0.3)">+</span>
+    <span class="tag tag-violet">🪐 Mars</span>
+    <span style="color:var(--c-cyan);font-family:var(--font-mono);font-size:0.8rem">= GENERATING...</span>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 03 — IMAGE REVEAL
+────────────────────────────────── -->
+<section class="slide" id="s3">
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1.2rem;width:100%">
+    <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="color:var(--c-green)">// AI GENERATION COMPLETE · 100%</div>
+    <h2 class="anim-2" style="font-family:var(--font-hud);font-size:clamp(1.8rem,4vw,3rem);text-align:center">
+      YOUR IMAGINATION.<br><span class="grad-green">INSTANT REALITY.</span>
+    </h2>
+    <div class="anim-scale" style="width:min(680px,88vw);position:relative">
+      <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1200&q=85" alt="AI Generated" style="width:100%;height:min(380px,48vh);object-fit:cover;border:1px solid rgba(0,212,255,0.25);box-shadow:0 0 60px rgba(0,212,255,0.15)"/>
+      <div style="position:absolute;top:12px;left:12px;font-family:var(--font-mono);font-size:0.6rem;color:var(--c-cyan);background:rgba(0,0,0,0.7);padding:4px 10px;border:1px solid rgba(0,212,255,0.3)">AI GENERATED · DALL-E</div>
+    </div>
+    <div class="panel anim-4" style="padding:14px 28px;text-align:center">
+      <span style="font-family:var(--font-mono);font-size:0.8rem;color:rgba(226,244,255,0.6)">
+        GENERATION TIME: <strong style="color:var(--c-green)">8.2 SECONDS</strong> &nbsp;·&nbsp; 
+        HUMAN ARTIST: <strong style="color:var(--c-text)">3–4 HOURS</strong>
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 04 — WHO AM I
+────────────────────────────────── -->
+<section class="slide" id="s4">
+  <div class="split" style="max-width:1000px">
+    <div style="display:flex;flex-direction:column;gap:1.2rem">
+      <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// PRESENTER IDENTIFICATION</div>
+      <h2 class="anim-2" style="font-family:var(--font-hud);font-size:clamp(2rem,5vw,4rem);line-height:1.1">
+        HEY, I AM<br><span class="grad-cyan">ZAIN.</span>
+      </h2>
+      <div class="anim-3" style="display:flex;flex-direction:column;gap:10px">
+        <div class="step">
+          <div style="font-size:1.6rem">🎓</div>
+          <div><div style="font-weight:700;font-size:0.95rem">AIML ENGINEERING STUDENT</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">Artificial Intelligence & Machine Learning</div></div>
+        </div>
+        <div class="step">
+          <div style="font-size:1.6rem">🚀</div>
+          <div><div style="font-weight:700;font-size:0.95rem">FOUNDER — NEXTVERSE</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">AI & Web Development Agency</div></div>
+        </div>
+        <div class="step">
+          <div style="font-size:1.6rem">📅</div>
+          <div><div style="font-weight:700;font-size:0.95rem">20 YEARS OLD</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">Started building things at your age</div></div>
+        </div>
+      </div>
+      <div class="alert-box anim-4">
+        <div style="font-size:0.9rem;color:rgba(226,244,255,0.7);line-height:1.7">💬 When I was in 9th grade, I had no idea what to do. <strong style="color:var(--c-text)">AI changed everything for me.</strong></div>
+      </div>
+    </div>
+    <div class="anim-scale" style="display:flex;justify-content:center">
+      <div style="position:relative">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=85" alt="Presenter" style="width:min(300px,38vw);height:min(380px,50vh);object-fit:cover;box-shadow:0 0 60px rgba(0,212,255,0.2)"/>
+        <div style="position:absolute;bottom:-1px;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--c-bg))"></div>
+        <div style="position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:0.6rem;color:var(--c-cyan);background:rgba(0,0,0,0.7);padding:4px 10px;border:1px solid rgba(0,212,255,0.3)">NEXTVERSE · FOUNDER</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 05 — AI EVERYWHERE
+────────────────────────────────── -->
+<section class="slide" id="s5">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// AI PRESENCE SCAN · SECTION 02</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2.2rem,5vw,4.5rem)">
+    YOU HAVE BEEN USING AI<br><span class="grad-cyan">FOR YEARS.</span>
+  </h2>
+  <div class="grid-6 anim-3" style="margin-top:1.8rem;width:min(940px,94vw)">
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">📺</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">YOUTUBE</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Recommends exactly what you want to watch next</div>
+      <span class="tag tag-violet" style="margin-top:10px;font-size:0.6rem">Recommendation AI</span>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">📸</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">INSTAGRAM</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Knows what memes you will laugh at</div>
+      <span class="tag tag-pink" style="margin-top:10px;font-size:0.6rem">Feed Algorithm</span>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">🗺️</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">GOOGLE MAPS</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Predicts traffic and fastest route</div>
+      <span class="tag tag-cyan" style="margin-top:10px;font-size:0.6rem">Predictive AI</span>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">🎬</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">NETFLIX</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Shows you the next show before you ask</div>
+      <span class="tag tag-green" style="margin-top:10px;font-size:0.6rem">Content AI</span>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">🎙️</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">VOICE ASSIST</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Siri, Google, Alexa — all powered by AI</div>
+      <span class="tag tag-orange" style="margin-top:10px;font-size:0.6rem">Voice AI</span>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">📧</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px">GMAIL</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Filters spam before you ever see it</div>
+      <span class="tag tag-yellow" style="margin-top:10px;font-size:0.6rem">Spam AI</span>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 06 — WHAT IS AI
+────────────────────────────────── -->
+<section class="slide" id="s6">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// CORE DEFINITION · SECTION 03</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2rem,5vw,4.5rem)">
+    AI IS A PROGRAM THAT<br><span class="grad-cyan">LEARNS FROM EXAMPLES.</span>
+  </h2>
+  <div class="anim-3" style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;width:min(860px,92vw);margin-top:2rem">
+    <div class="panel panel-glow" style="padding:28px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">👶</div>
+      <div style="font-family:var(--font-mono);font-weight:700;margin-bottom:8px;font-size:0.85rem">YOU AS A BABY</div>
+      <div style="color:rgba(226,244,255,0.55);font-size:0.85rem;line-height:1.6">You learned "dog" by seeing 1,000 dogs. No textbook required.</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:2rem;color:var(--c-cyan)">⟹</div>
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:rgba(226,244,255,0.4);margin-top:4px">SAME IDEA</div>
+    </div>
+    <div class="panel panel-glow" style="padding:28px;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">🤖</div>
+      <div style="font-family:var(--font-mono);font-weight:700;margin-bottom:8px;font-size:0.85rem">ARTIFICIAL INTELLIGENCE</div>
+      <div style="color:rgba(226,244,255,0.55);font-size:0.85rem;line-height:1.6">Studied billions of images and texts at machine speed.</div>
+    </div>
+  </div>
+  <div class="alert-box anim-4" style="margin-top:1.8rem;max-width:700px;text-align:center">
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:8px">SYSTEM SUMMARY</div>
+    <div style="font-size:1.05rem;line-height:1.7">AI = <strong style="color:var(--c-cyan)">Software that gets smarter by studying patterns in data.</strong> No magic. Just very fast learning.</div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 07 — CHALLENGE ARENA INTRO
+────────────────────────────────── -->
+<section class="slide" id="s7">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="color:var(--c-yellow)">// INITIATING CHALLENGE SEQUENCE · SECTION 04</div>
+  <h2 class="hero-title anim-2">AI <span class="grad-fire">CHALLENGE</span> ARENA.</h2>
+  <p class="hero-sub anim-3" style="margin-top:0.8rem">You challenge AI. AI delivers. Let's see who wins.</p>
+  <div class="grid-5 anim-4" style="margin-top:2rem;width:min(900px,94vw)">
+    <div class="card" style="text-align:center;padding:20px 12px">
+      <div style="font-size:2rem;margin-bottom:8px">🎨</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--c-cyan)">ROUND 01</div>
+      <div style="font-size:0.8rem;margin-top:4px;color:rgba(226,244,255,0.6)">Image Gen</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px">
+      <div style="font-size:2rem;margin-bottom:8px">📖</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--c-cyan)">ROUND 02</div>
+      <div style="font-size:0.8rem;margin-top:4px;color:rgba(226,244,255,0.6)">Your Story</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px">
+      <div style="font-size:2rem;margin-bottom:8px">🎵</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--c-yellow)">ROUND 03</div>
+      <div style="font-size:0.8rem;margin-top:4px;color:rgba(226,244,255,0.6)">School Rap</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px">
+      <div style="font-size:2rem;margin-bottom:8px">🧮</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--c-green)">ROUND 04</div>
+      <div style="font-size:0.8rem;margin-top:4px;color:rgba(226,244,255,0.6)">Hard Topic</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px">
+      <div style="font-size:2rem;margin-bottom:8px">🌍</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--c-violet)">ROUND 05</div>
+      <div style="font-size:0.8rem;margin-top:4px;color:rgba(226,244,255,0.6)">Translate</div>
+    </div>
+  </div>
+  <div class="alert-box anim-5" style="margin-top:2rem;max-width:600px;text-align:center">
+    <div style="font-family:var(--font-mono);font-size:0.8rem">🏆 BEST CHALLENGE WINS A PRIZE · YOU DECIDE WHAT WE TEST</div>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 08 — ROUND 1: IMAGE GEN
+────────────────────────────────── -->
+<section class="slide" id="s8">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="round-badge anim-1">ROUND 01 · IMAGE GENERATION</div>
+  <h2 class="hero-title anim-2" style="margin-top:1rem;font-size:clamp(2rem,5vw,4rem)">
+    YOU IMAGINE IT.<br><span class="grad-cyan">AI PAINTS IT.</span>
+  </h2>
+  <div class="grid-2 anim-3" style="margin-top:1.8rem;width:min(820px,92vw);gap:20px">
+    <div class="panel" style="padding:24px">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:14px">THE RULES</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:12px;align-items:start"><div class="num-badge">1</div><div style="color:rgba(226,244,255,0.7);font-size:0.88rem">One student shouts a wild scene</div></div>
+        <div style="display:flex;gap:12px;align-items:start"><div class="num-badge">2</div><div style="color:rgba(226,244,255,0.7);font-size:0.88rem">We type it into DALL-E live on screen</div></div>
+        <div style="display:flex;gap:12px;align-items:start"><div class="num-badge">3</div><div style="color:rgba(226,244,255,0.7);font-size:0.88rem">Count down to the dramatic reveal</div></div>
+        <div style="display:flex;gap:12px;align-items:start"><div class="num-badge">4</div><div style="color:rgba(226,244,255,0.7);font-size:0.88rem">Class votes: Better than expected? 👍👎</div></div>
+      </div>
+    </div>
+    <div class="panel" style="padding:24px">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:14px">SAMPLE PROMPTS</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="prompt" style="font-size:0.78rem">A dragon riding a bicycle in Mumbai traffic</div>
+        <div class="prompt" style="font-size:0.78rem">A robot teacher handing homework to confused students</div>
+        <div class="prompt" style="font-size:0.78rem">A cat in a suit presenting in a boardroom</div>
+      </div>
+    </div>
+  </div>
+  <div class="anim-4" style="display:flex;gap:10px;margin-top:1.5rem;flex-wrap:wrap;justify-content:center">
+    <span class="tag tag-green">⏱ ~3 MINUTES</span>
+    <span class="tag tag-orange">🔥 HIGH ENERGY</span>
+    <span class="tag tag-cyan">👥 FULL CLASS INVOLVED</span>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 09 — ROUND 2: STORY
+────────────────────────────────── -->
+<section class="slide" id="s9">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="round-badge anim-1" style="border-color:var(--c-pink);color:var(--c-pink)">ROUND 02 · STORY GENERATION</div>
+  <h2 class="hero-title anim-2" style="margin-top:1rem;font-size:clamp(2rem,5vw,4rem)">
+    YOUR NAME.<br><span class="grad-violet">AI'S STORY.</span>
+  </h2>
+  <div class="alert-box anim-3" style="margin-top:1.5rem;max-width:720px">
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:10px">CHALLENGE PARAMETERS</div>
+    <p style="color:rgba(226,244,255,0.7);font-size:0.95rem;line-height:1.7">One student gives their name + dream job. AI writes a cinematic story about them becoming a hero. <strong style="color:var(--c-text)">We read it out loud. The class reacts.</strong></p>
+  </div>
+  <div class="anim-4" style="width:min(720px,92vw);margin-top:1.5rem">
+    <div class="prompt good" style="font-size:0.82rem;line-height:1.6;padding:16px 20px">
+      Write a short cinematic 4-sentence story about [STUDENT NAME], a 14-year-old from India who grows up to become the world's greatest [DREAM JOB] using AI. Make it inspiring and end with a twist.
+    </div>
+  </div>
+  <div class="anim-5" style="display:flex;gap:10px;margin-top:1.5rem;flex-wrap:wrap;justify-content:center">
+    <span class="tag tag-cyan">🙋 ASK FOR A VOLUNTEER</span>
+    <span class="tag tag-violet">📢 READ IT DRAMATICALLY</span>
+    <span class="tag tag-green">🎉 CLASS REACTS</span>
+  </div>
+</section>
+
+<!-- ──────────────────────────────────
+     SLIDE 10 — ROUND 3: RAP
+────────────────────────────────── -->
+<section class="slide" id="s10">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="round-badge anim-1" style="border-color:var(--c-yellow);color:var(--c-yellow)">ROUND 03 · AI MUSIC</div>
+  <h2 class="hero-title anim-2" style="margin-top:1rem;font-size:clamp(2rem,5vw,4rem)">
+    AI JUST WROTE A<br><span class="grad-fire">RAP ABOUT YOUR SCHOOL.</span>
+  </h2>
+  <div class="anim-3" style="width:min(740px,92vw);margin-top:1.5rem">
+    <div class="prompt good" style="font-size:0.82rem;line-height:1.6;padding:16px 20px">
+      Write a funny 8-line rap about students in [SCHOOL NAME] secretly training to defeat AI robots. Include rhymes, a chorus, and make it hype. Use Gen-Z tone.
+    </div>
+  </div>
+  <div class="grid-2 anim-4" style="margin-top:1.5rem;width:min(680px,92vw);gap:16px">
+    <div class="card" style="text-align:center;padding:24px">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎤</div>
+      <div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:700;margin-bottom:6px">STEP 01</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.85rem">AI generates the rap live on screen</div>
+    </div>
+    <div class="card" style="text-align:center;padding:24px">
+      <div style="font-size:2.5rem;margin-bottom:10px">🦁</div>
+      <div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:700;margin-bottom:6px">STEP 02</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.85rem">Who dares to perform it? Instant legend status.</div>
+    </div>
+  </div>
+  <div class="alert-box anim-5" style="max-width:580px;text-align:center;margin-top:1.2rem">
+    <div style="font-family:var(--font-mono);font-size:0.8rem">⚡ BONUS: Can anyone freestyle a better verse than AI?</div>
+  </div>
+</section>
+
+<!-- SLIDE 11 — ROUND 4: EXPLAIN HARD TOPIC -->
+<section class="slide" id="s11">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="round-badge anim-1" style="border-color:var(--c-green);color:var(--c-green)">ROUND 04 · EXPLAIN MODE</div>
+  <div class="split" style="max-width:980px;margin-top:1.2rem">
+    <div style="display:flex;flex-direction:column;gap:1.2rem">
+      <h2 class="anim-2" style="font-family:var(--font-hud);font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.15">
+        MAKE THE HARDEST TOPIC<br><span class="grad-green">SOUND EASY.</span>
+      </h2>
+      <p class="anim-3" style="color:rgba(226,244,255,0.6);font-size:0.95rem;line-height:1.7">Students name their most confusing subject. AI explains it like they are 10 years old.</p>
+      <div class="anim-4" style="display:flex;flex-direction:column;gap:8px">
+        <span class="tag tag-violet" style="justify-content:center">📐 Pythagoras Theorem?</span>
+        <span class="tag tag-pink" style="justify-content:center">⚗️ Photosynthesis?</span>
+        <span class="tag tag-cyan" style="justify-content:center">🔢 Algebra?</span>
+        <span class="tag tag-orange" style="justify-content:center">📜 Historical dates?</span>
+      </div>
+    </div>
+    <div class="anim-5" style="display:flex;flex-direction:column;gap:12px">
+      <div class="prompt bad" style="font-size:0.82rem;padding:14px 18px">Explain photosynthesis.</div>
+      <div style="text-align:center;font-family:var(--font-mono);font-size:0.7rem;color:rgba(226,244,255,0.3)">vs</div>
+      <div class="prompt good" style="font-size:0.82rem;padding:14px 18px;line-height:1.6">Explain photosynthesis to a 12-year-old using only a pizza analogy. Make it funny and end with a fun fact.</div>
+      <div class="alert-box" style="text-align:center;padding:14px">
+        <div style="font-family:var(--font-mono);font-size:0.75rem">After: "Understood it now?" Class votes 👍👎</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 12 — ROUND 5: TRANSLATION -->
+<section class="slide" id="s12">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="round-badge anim-1" style="border-color:var(--c-violet);color:#a78bfa">ROUND 05 · LANGUAGE AI</div>
+  <h2 class="hero-title anim-2" style="margin-top:1rem;font-size:clamp(2rem,5vw,4rem)">
+    AI SPEAKS<br><span class="grad-violet">EVERY LANGUAGE.</span>
+  </h2>
+  <div class="grid-4 anim-3" style="margin-top:1.8rem;width:min(720px,92vw)">
+    <div class="card" style="text-align:center;padding:20px 12px"><div style="font-size:2rem;margin-bottom:6px">🇯🇵</div><div style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700">JAPANESE</div></div>
+    <div class="card" style="text-align:center;padding:20px 12px"><div style="font-size:2rem;margin-bottom:6px">🇫🇷</div><div style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700">FRENCH</div></div>
+    <div class="card" style="text-align:center;padding:20px 12px"><div style="font-size:2rem;margin-bottom:6px">🇸🇦</div><div style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700">ARABIC</div></div>
+    <div class="card" style="text-align:center;padding:20px 12px"><div style="font-size:2rem;margin-bottom:6px">🇩🇪</div><div style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700">GERMAN</div></div>
+  </div>
+  <div class="alert-box anim-4" style="margin-top:1.8rem;max-width:660px;text-align:center">
+    <div style="font-size:1rem;line-height:1.7">Someone says a sentence. AI translates it into <strong style="color:var(--c-cyan)">3 languages in 5 seconds.</strong> Then back to English — did it stay accurate?</div>
+  </div>
+  <div class="anim-5" style="display:flex;gap:10px;margin-top:1.2rem;flex-wrap:wrap;justify-content:center">
+    <span class="tag tag-green">✅ 200+ LANGUAGES</span>
+    <span class="tag tag-cyan">🔥 INSTANT</span>
+    <span class="tag tag-orange">🤯 FREE FOREVER</span>
+  </div>
+</section>
+
+<!-- SLIDE 13 — AI FOR STUDENTS -->
+<section class="slide" id="s13">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// STUDENT SUPERPOWER · SECTION 05</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2rem,4.5vw,4rem)">
+    AI IS YOUR<br><span class="grad-cyan">UNFAIR ADVANTAGE.</span>
+  </h2>
+  <div class="grid-6 anim-3" style="margin-top:1.8rem;width:min(960px,95vw)">
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">🤖</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">STUDY PARTNER</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Quizzes you, explains concepts, creates flashcards. Never tired.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">Quiz me on Chapter 3.</div>
+    </div>
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">📝</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">ESSAY HELPER</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Improves your writing while keeping your own voice.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">Improve my essay, keep my style.</div>
+    </div>
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">🗓️</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">STUDY PLANNER</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Tell it exam dates. It creates a day-by-day revision plan.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">Exams in 3 weeks. Plan my revision.</div>
+    </div>
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">💬</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">ENGLISH COACH</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Conversational practice that corrects without judgment.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">Correct my English, explain mistakes.</div>
+    </div>
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">🔭</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">CAREER EXPLORER</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Maps entire career paths for any interest you have.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">I love gaming. What careers can this lead to?</div>
+    </div>
+    <div class="card" style="padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">🎯</div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:6px">SKILL COACH</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.78rem;line-height:1.5">Teaches any skill from scratch. Step by step. Free.</div>
+      <div class="prompt" style="margin-top:10px;font-size:0.7rem;padding:8px 12px">Teach me Python in 7 days, step by step.</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 14 — BUILD LIVE VOTE -->
+<section class="slide" id="s14">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="color:var(--c-green)">// LIVE BUILD · SECTION 06</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2.2rem,5vw,4.5rem)">
+    WE ARE ABOUT TO<br><span class="grad-green">BUILD SOMETHING</span><br>IN 60 SECONDS.
+  </h2>
+  <p class="hero-sub anim-3" style="margin-top:0.8rem">You decide what we create. Vote now.</p>
+  <div class="grid-2 anim-4" style="margin-top:1.8rem;width:min(680px,92vw);gap:20px">
+    <div class="card" style="padding:32px;text-align:center;cursor:pointer;border-color:rgba(124,58,237,0.3)" onclick="this.style.transform='scale(1.04)';this.style.borderColor='rgba(124,58,237,0.8)';this.style.background='rgba(124,58,237,0.1)'">
+      <div style="font-size:3.5rem;margin-bottom:14px">🎮</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;color:#a78bfa;margin-bottom:6px">OPTION A</div>
+      <div style="font-size:1.3rem;font-weight:700">BUILD A GAME</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.85rem;margin-top:6px">A playable game, right now</div>
+    </div>
+    <div class="card" style="padding:32px;text-align:center;cursor:pointer;border-color:rgba(0,212,255,0.3)" onclick="this.style.transform='scale(1.04)';this.style.borderColor='rgba(0,212,255,0.8)';this.style.background='rgba(0,212,255,0.08)'">
+      <div style="font-size:3.5rem;margin-bottom:14px">🌐</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--c-cyan);margin-bottom:6px">OPTION B</div>
+      <div style="font-size:1.3rem;font-weight:700">BUILD A WEBSITE</div>
+      <div style="color:rgba(226,244,255,0.5);font-size:0.85rem;margin-top:6px">A real page, designed by AI</div>
+    </div>
+  </div>
+  <div class="anim-5" style="display:flex;gap:10px;margin-top:1.5rem;flex-wrap:wrap;justify-content:center">
+    <span class="tag tag-green">🙋 HANDS UP FOR A OR B</span>
+    <span class="tag tag-orange">⏱ WINNER GETS BUILT LIVE</span>
+  </div>
+</section>
+
+<!-- SLIDE 15 — AI FAILS -->
+<section class="slide" id="s15">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="color:var(--c-orange)">// CRITICAL ANALYSIS · SECTION 07</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2.2rem,5vw,4.5rem)">
+    AI IS POWERFUL.<br><span class="grad-fire">BUT NOT PERFECT.</span>
+  </h2>
+  <div class="grid-3 anim-3" style="margin-top:1.8rem;width:min(900px,94vw)">
+    <div class="card" style="text-align:center;border-color:rgba(255,50,50,0.2)">
+      <div style="font-size:2.5rem;margin-bottom:10px">😵</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:8px;color:#f87171">HALLUCINATIONS</div>
+      <div style="color:rgba(226,244,255,0.55);font-size:0.82rem;line-height:1.5">AI sometimes makes up facts that sound completely real but are 100% wrong.</div>
+    </div>
+    <div class="card" style="text-align:center;border-color:rgba(255,215,0,0.2)">
+      <div style="font-size:2.5rem;margin-bottom:10px">🕰️</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:8px;color:var(--c-yellow)">OLD INFORMATION</div>
+      <div style="color:rgba(226,244,255,0.55);font-size:0.82rem;line-height:1.5">AI has a knowledge cutoff. It does not know about very recent events.</div>
+    </div>
+    <div class="card" style="text-align:center;border-color:rgba(255,107,53,0.2)">
+      <div style="font-size:2.5rem;margin-bottom:10px">🎭</div>
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:8px;color:var(--c-orange)">BIAS AND ERRORS</div>
+      <div style="color:rgba(226,244,255,0.55);font-size:0.82rem;line-height:1.5">Learned from human data, which means it can have human-like biases.</div>
+    </div>
+  </div>
+  <div class="alert-box anim-4" style="margin-top:1.8rem;max-width:720px">
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);letter-spacing:0.15em;margin-bottom:10px">🗳️ QUICK VOTE: SHOULD WE TRUST AI 100%?</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <span class="tag tag-green" style="cursor:pointer;font-size:0.85rem;padding:8px 20px">👍 YES</span>
+      <span class="tag tag-pink" style="cursor:pointer;font-size:0.85rem;padding:8px 20px">👎 NO</span>
+      <span class="tag tag-orange" style="cursor:pointer;font-size:0.85rem;padding:8px 20px">🤔 SOMETIMES</span>
+    </div>
+  </div>
+  <div class="anim-5" style="display:flex;gap:14px;margin-top:1.2rem;flex-wrap:wrap;justify-content:center">
+    <div class="panel" style="padding:12px 18px;display:flex;align-items:center;gap:8px;font-size:0.82rem"><span>✅</span> Always verify important facts</div>
+    <div class="panel" style="padding:12px 18px;display:flex;align-items:center;gap:8px;font-size:0.82rem"><span>🔒</span> Never share personal info with AI</div>
+    <div class="panel" style="padding:12px 18px;display:flex;align-items:center;gap:8px;font-size:0.82rem"><span>🧠</span> Use AI to learn, not to cheat</div>
+  </div>
+</section>
+
+<!-- SLIDE 16 — HOW TO START -->
+<section class="slide" id="s16">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// ACTION PROTOCOL · SECTION 08</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2.2rem,5vw,4.5rem)">
+    YOU CAN START<br><span class="grad-cyan">TONIGHT.</span>
+  </h2>
+  <div class="anim-3" style="display:flex;flex-direction:column;gap:12px;width:min(740px,92vw);margin-top:1.5rem">
+    <div class="step">
+      <div class="num-badge" style="background:rgba(0,212,255,0.15);border-color:rgba(0,212,255,0.4);font-size:1rem">1</div>
+      <div><div style="font-weight:700;font-size:0.95rem">CREATE A FREE ACCOUNT</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">ChatGPT (chat.openai.com) or Gemini (gemini.google.com) — both free</div></div>
+    </div>
+    <div class="step">
+      <div class="num-badge" style="background:rgba(0,255,136,0.12);border-color:rgba(0,255,136,0.35);color:var(--c-green);font-size:1rem">2</div>
+      <div><div style="font-weight:700;font-size:0.95rem">LEARN TO PROMPT WELL</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">Be specific. Give context. Tell it your age, your goal, your constraints.</div></div>
+    </div>
+    <div class="step">
+      <div class="num-badge" style="background:rgba(255,215,0,0.12);border-color:rgba(255,215,0,0.35);color:var(--c-yellow);font-size:1rem">3</div>
+      <div><div style="font-weight:700;font-size:0.95rem">TRY 5 THINGS TONIGHT</div><div style="color:rgba(226,244,255,0.5);font-size:0.82rem;margin-top:2px">Explore, experiment, break things, have fun with it.</div></div>
+    </div>
+  </div>
+  <div class="grid-5 anim-4" style="margin-top:1.5rem;width:min(900px,95vw)">
+    <div class="card" style="text-align:center;padding:16px 10px"><div style="font-size:1.8rem;margin-bottom:6px">📖</div><div style="font-size:0.72rem;color:rgba(226,244,255,0.5)">Learn something new</div></div>
+    <div class="card" style="text-align:center;padding:16px 10px"><div style="font-size:1.8rem;margin-bottom:6px">✍️</div><div style="font-size:0.72rem;color:rgba(226,244,255,0.5)">Create a story</div></div>
+    <div class="card" style="text-align:center;padding:16px 10px"><div style="font-size:1.8rem;margin-bottom:6px">❓</div><div style="font-size:0.72rem;color:rgba(226,244,255,0.5)">Generate a quiz</div></div>
+    <div class="card" style="text-align:center;padding:16px 10px"><div style="font-size:1.8rem;margin-bottom:6px">📅</div><div style="font-size:0.72rem;color:rgba(226,244,255,0.5)">Plan your week</div></div>
+    <div class="card" style="text-align:center;padding:16px 10px"><div style="font-size:1.8rem;margin-bottom:6px">💡</div><div style="font-size:0.72rem;color:rgba(226,244,255,0.5)">Learn a new skill</div></div>
+  </div>
+  <div class="alert-box anim-5" style="max-width:720px;text-align:center;margin-top:1.2rem">
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--c-yellow);letter-spacing:0.1em;margin-bottom:8px">🌙 TONIGHT'S AI CHALLENGE</div>
+    <div style="font-size:0.92rem;color:rgba(226,244,255,0.8)">"Explain [my most confusing subject] to me like I'm 12, then quiz me on it."</div>
+  </div>
+</section>
+
+<!-- SLIDE 17 — FUTURE OF AI -->
+<section class="slide" id="s17">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// FUTURE PROJECTION · SECTION 09</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2rem,4.5vw,4rem)">
+    BY THE TIME YOU GRADUATE<br><span class="grad-cyan">THE WORLD LOOKS LIKE THIS.</span>
+  </h2>
+  <div class="grid-6 anim-3" style="margin-top:1.8rem;width:min(960px,95vw)">
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">👓</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">AI SMART GLASSES</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">See the world with live AI overlays — translation, identification, navigation.</div></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">🤖</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">AI ROBOTS</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">Clean, cook, deliver, assist — already being tested in homes today.</div></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">👨‍⚕️</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">AI DOCTORS</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">Detects cancers faster than human doctors in several hospitals.</div></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">🚗</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">SELF-DRIVING</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">Tesla and Waymo already operate today. Your first car may drive you.</div></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">🎓</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">AI TEACHERS</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">Personalized to your exact pace, style, and weak spots in real time.</div></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="font-size:2.2rem;margin-bottom:8px">🌍</div><div style="font-weight:700;font-size:0.82rem;margin-bottom:6px">CLIMATE AI</div><div style="color:rgba(226,244,255,0.5);font-size:0.75rem;line-height:1.4">Predicts weather, optimizes energy grids, helps reverse climate change.</div></div>
+  </div>
+  <div class="alert-box anim-4" style="max-width:620px;text-align:center;margin-top:1.5rem">
+    <div style="font-family:var(--font-mono);font-size:0.75rem">🗣️ QUICK SHOUT-OUT: Which one excites you the most?</div>
+  </div>
+</section>
+
+<!-- SLIDE 18 — AWARDS -->
+<section class="slide" id="s18">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="color:var(--c-yellow)">// AWARDS CEREMONY · SECTION 10</div>
+  <h2 class="hero-title anim-2" style="font-size:clamp(2.2rem,5vw,4.5rem)">
+    AND THE<br><span class="grad-fire">WINNERS ARE...</span>
+  </h2>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:1.8rem;width:min(980px,96vw)" class="anim-3">
+    <div class="award-card"><div class="award-icon">🏅</div><div class="award-name" style="color:var(--c-yellow)">BEST QUESTION</div><div class="award-desc">Asked the question that made everyone think</div></div>
+    <div class="award-card"><div class="award-icon">⚔️</div><div class="award-name" style="color:var(--c-pink)">AI CHALLENGER</div><div class="award-desc">Gave AI its hardest challenge of the day</div></div>
+    <div class="award-card"><div class="award-icon">✍️</div><div class="award-name" style="color:var(--c-cyan)">PROMPT MASTER</div><div class="award-desc">Gave the most creative AI prompt</div></div>
+    <div class="award-card"><div class="award-icon">💡</div><div class="award-name" style="color:var(--c-green)">FUTURE INVENTOR</div><div class="award-desc">Had the biggest idea for what AI could build</div></div>
+    <div class="award-card"><div class="award-icon">🙋</div><div class="award-name" style="color:var(--c-orange)">MOST ACTIVE</div><div class="award-desc">Never stopped participating all session</div></div>
+    <div class="award-card"><div class="award-icon">🔍</div><div class="award-name" style="color:#a78bfa">AI DETECTIVE</div><div class="award-desc">Caught AI making a mistake first</div></div>
+    <div class="award-card"><div class="award-icon">🎨</div><div class="award-name" style="color:var(--c-pink)">CREATIVE GENIUS</div><div class="award-desc">Most unexpected and brilliant idea</div></div>
+    <div class="award-card"><div class="award-icon">🎤</div><div class="award-name" style="color:var(--c-yellow)">RAP STAR</div><div class="award-desc">Performed the AI rap without flinching</div></div>
+  </div>
+</section>
+
+<!-- SLIDE 19 — Q&A -->
+<section class="slide" id="s19">
+  <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1">// OPEN CHANNEL · SECTION 11</div>
+  <h2 class="hero-title anim-2">
+    ANY QUESTION.<br><span class="grad-cyan">ANY TOPIC. 🎤</span>
+  </h2>
+  <div class="grid-3 anim-3" style="margin-top:2rem;width:min(800px,92vw)">
+    <div class="card" style="text-align:center;padding:28px 18px">
+      <div style="font-size:2.8rem;margin-bottom:10px">🌐</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.88rem;line-height:1.6">"Will AI take over the world?"</div>
+    </div>
+    <div class="card" style="text-align:center;padding:28px 18px">
+      <div style="font-size:2.8rem;margin-bottom:10px">💼</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.88rem;line-height:1.6">"Will AI take my future job?"</div>
+    </div>
+    <div class="card" style="text-align:center;padding:28px 18px">
+      <div style="font-size:2.8rem;margin-bottom:10px">🧠</div>
+      <div style="color:rgba(226,244,255,0.6);font-size:0.88rem;line-height:1.6">"Can AI become smarter than humans?"</div>
+    </div>
+  </div>
+  <div class="alert-box anim-4" style="margin-top:2rem;max-width:640px;text-align:center">
+    <div style="font-size:1rem;line-height:1.7">No wrong questions. No silly questions.<br><span style="color:rgba(226,244,255,0.6)">The best AI researchers still argue about these things.</span></div>
+  </div>
+</section>
+
+<!-- SLIDE 20 — CLOSING -->
+<section class="slide" id="s20">
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1.2rem;text-align:center">
+    <img class="anim-1" src="Group 9.png" alt="Nextverse" style="height:24px; width:max-content; object-fit:contain; margin-bottom:12px; opacity:0.85; filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); border: none; border-radius: 0;">
+  <div class="hud-label anim-1" style="margin-bottom:0.2rem;">// FINAL TRANSMISSION · NEXTVERSE</div>
+    <h2 class="anim-2" style="font-family:var(--font-hud);font-size:clamp(1.8rem,4vw,3.5rem);line-height:1.15;max-width:900px">
+      THE FUTURE BELONGS TO<br>PEOPLE WHO KNOW HOW TO<br><span class="grad-cyan">LEARN.</span>
+    </h2>
+    <div class="anim-3" style="max-width:720px">
+      <p style="font-size:1rem;color:rgba(226,244,255,0.65);line-height:1.7">
+        AI will not replace people who learn.<br>
+        <strong style="color:var(--c-text)">People who use AI well</strong> may outperform<br>
+        people who do not — in any field.
+      </p>
+    </div>
+    <div class="alert-box anim-4" style="max-width:820px;padding:20px 32px;margin-top:0.5rem;">
+      <div style="font-family:var(--font-hud);font-size:clamp(0.9rem,2vw,1.3rem);line-height:1.6;letter-spacing:0.02em">
+        "Maybe the next person who builds something amazing<br>
+        with AI is <span class="grad-cyan">sitting in this room right now."</span>
+      </div>
+    </div>
+    <div class="anim-5" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:0.5rem;">
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:rgba(226,244,255,0.35);letter-spacing:0.15em">CONNECT · FOLLOW THE JOURNEY</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <span class="tag tag-cyan">🚀 NEXTVERSE</span>
+        <span class="tag tag-green">🌐 gonextverse.in</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:rgba(226,244,255,0.3);letter-spacing:0.1em;margin-top:6px">
+        THANK YOU FOR BEING THE MOST CURIOUS AUDIENCE I HAVE EVER SPOKEN TO. 🙏
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end #deck -->
+
+<script>
+const TOTAL = 21; // slides 0–20
+let current = 0;
+
+// ── Build progress dots ──
+const dotsEl = document.getElementById("progress-dots");
+for(let i=0;i<TOTAL;i++){
+  const d = document.createElement("div");
+  d.className = "progress-dot" + (i===0?" active":"");
+  d.id = "dot"+i;
+  d.onclick = ()=>goTo(i);
+  d.style.cursor="pointer";
+  dotsEl.appendChild(d);
+}
+
+// ── HUD Clock ──
+function updateClock(){
+  const now=new Date();
+  document.getElementById("hud-time").textContent=
+    now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ── Navigation ──
+function goTo(n){
+  if(n<0||n>=TOTAL)return;
+  const slides=document.querySelectorAll(".slide");
+  slides[current].classList.remove("active");
+  document.getElementById("dot"+current).classList.remove("active");
+  if(current<TOTAL-1) document.getElementById("dot"+current).classList.add("done");
+  current=n;
+  slides[current].classList.add("active");
+  document.getElementById("dot"+current).classList.remove("done");
+  document.getElementById("dot"+current).classList.add("active");
+  const sn=String(current+1).padStart(2,"0");
+  const tot=String(TOTAL).padStart(2,"0");
+  document.getElementById("hud-slide-num").textContent=sn+" / "+tot;
+}
+function nextSlide(){goTo(current+1)}
+function prevSlide(){goTo(current-1)}
+
+// ── Keyboard ──
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key===" "||e.key==="PageDown"){e.preventDefault();nextSlide()}
+  if(e.key==="ArrowLeft"||e.key==="ArrowUp"||e.key==="PageUp"){e.preventDefault();prevSlide()}
+  if(e.key==="Home"){goTo(0)}
+  if(e.key==="End"){goTo(TOTAL-1)}
+  if(e.key==="f"||e.key==="F"){
+    if(!document.fullscreenElement){document.documentElement.requestFullscreen()}
+    else{document.exitFullscreen()}
+  }
+});
+
+// ── Touch/Swipe ──
+let tx=0;
+document.addEventListener("touchstart",e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener("touchend",e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>60){dx<0?nextSlide():prevSlide()}
+},{passive:true});
+
+// ── Particle Background ──
+(function(){
+  const canvas=document.createElement("canvas");
+  canvas.style.cssText="position:fixed;inset:0;z-index:0;pointer-events:none";
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext("2d");
+  let W,H,particles=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+  resize();window.addEventListener("resize",resize);
+  for(let i=0;i<55;i++){
+    particles.push({
+      x:Math.random()*window.innerWidth,
+      y:Math.random()*window.innerHeight,
+      r:Math.random()*1.5+0.3,
+      vx:(Math.random()-0.5)*0.3,
+      vy:(Math.random()-0.5)*0.3,
+      a:Math.random()*0.6+0.1
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle="rgba(0,212,255,"+p.a+")";ctx.fill();
+    });
+    // draw faint connection lines
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x;
+        const dy=particles[i].y-particles[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<120){
+          ctx.beginPath();
+          ctx.strokeStyle="rgba(0,212,255,"+(0.06*(1-dist/120))+")";
+          ctx.lineWidth=0.5;
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── Mouse Glow ──
+(function(){
+  const glow=document.createElement("div");
+  glow.style.cssText="position:fixed;width:300px;height:300px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,rgba(0,212,255,0.04),transparent 70%);transform:translate(-50%,-50%);transition:opacity 0.3s";
+  document.body.appendChild(glow);
+  document.addEventListener("mousemove",e=>{glow.style.left=e.clientX+"px";glow.style.top=e.clientY+"px"});
+})();
+</script>
+</body>
+</html>

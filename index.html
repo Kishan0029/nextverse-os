@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nextverse OS — Presentation Hub</title>
+<meta name="description" content="Nextverse OS — A futuristic interactive presentation hub by Kishan Revankar, Founder of Nextverse.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-bg:#020b14;
+  --c-cyan:#00d4ff;
+  --c-green:#00ff88;
+  --c-violet:#7c3aed;
+  --c-orange:#ff6b35;
+  --c-text:#e2f4ff;
+  --c-dim:rgba(0,212,255,0.5);
+  --c-glass:rgba(0,212,255,0.04);
+  --c-border:rgba(0,212,255,0.15);
+  --font-hud:'Orbitron',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --font-body:'Inter',sans-serif;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--c-bg);color:var(--c-text);font-family:var(--font-body);}
+body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="%2300d4ff" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="%2300d4ff"/><path d="M12 0v4M12 20v4M0 12h4M20 12h4" stroke="%2300d4ff" stroke-width="1.5"/></svg>') 12 12, crosshair;}
+
+/* ── BACKGROUND ── */
+#bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:50px 50px;}
+#bg-scan{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(transparent 50%,rgba(0,212,255,0.012) 50%);
+  background-size:100% 4px;}
+#bg-vignette{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,10,20,0.8) 100%);}
+#bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);animation:orbFloat 12s ease-in-out infinite;}
+.orb1{width:600px;height:600px;background:rgba(0,212,255,0.06);top:-15%;left:-10%;animation-delay:0s;}
+.orb2{width:500px;height:500px;background:rgba(124,58,237,0.08);bottom:-10%;right:-5%;animation-delay:-4s;}
+.orb3{width:400px;height:400px;background:rgba(0,255,136,0.04);top:30%;right:15%;animation-delay:-8s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.05)}66%{transform:translate(-20px,25px) scale(0.97)}}
+#bg-scanline{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(transparent 40%,rgba(0,212,255,0.05) 50%,transparent 60%);
+  background-size:100% 200%;animation:scanDown 4s linear infinite;}
+@keyframes scanDown{0%{background-position:0 -100%}100%{background-position:0 200%}}
+
+/* ── HUD CORNERS ── */
+.hud-corner{position:fixed;width:80px;height:80px;z-index:5;pointer-events:none;}
+.hud-corner.tl{top:52px;left:20px;border-top:2px solid var(--c-cyan);border-left:2px solid var(--c-cyan);}
+.hud-corner.tr{top:52px;right:20px;border-top:2px solid var(--c-cyan);border-right:2px solid var(--c-cyan);}
+.hud-corner.bl{bottom:45px;left:20px;border-bottom:2px solid var(--c-cyan);border-left:2px solid var(--c-cyan);}
+.hud-corner.br{bottom:45px;right:20px;border-bottom:2px solid var(--c-cyan);border-right:2px solid var(--c-cyan);}
+
+/* ── TOP STATUS BAR ── */
+#top-bar{
+  position:fixed;top:0;left:0;right:0;height:52px;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:rgba(2,11,20,0.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--c-border);
+}
+#top-bar .left{display:flex;align-items:center;gap:18px;}
+#top-bar .center{display:flex;align-items:center;gap:12px;}
+#top-bar .right{display:flex;align-items:center;gap:18px;}
+#top-bar .sys-label{font-family:var(--font-mono);font-size:0.6rem;color:var(--c-dim);letter-spacing:0.18em;}
+#top-bar .sys-val{font-family:var(--font-mono);font-size:0.65rem;color:var(--c-cyan);}
+.top-dot{width:6px;height:6px;border-radius:50%;background:var(--c-cyan);animation:blink 2s infinite;}
+.top-dot.green{background:var(--c-green);animation-delay:0.5s;}
+.top-dot.violet{background:var(--c-violet);animation-delay:1s;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+#clock-display{font-family:var(--font-hud);font-size:0.75rem;color:var(--c-cyan);letter-spacing:0.1em;}
+
+/* ── BOTTOM BAR ── */
+#bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;height:42px;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:rgba(2,11,20,0.85);backdrop-filter:blur(20px);
+  border-top:1px solid var(--c-border);
+}
+.bar-label{font-family:var(--font-mono);font-size:0.55rem;color:rgba(0,212,255,0.4);letter-spacing:0.15em;}
+
+/* ── CANVAS (PARTICLE NETWORK) ── */
+#particle-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ── DESKTOP ── */
+#desktop{
+  position:fixed;inset:0;
+  padding:72px 40px 60px;
+  display:flex;
+  flex-direction:column;
+  z-index:3;
+  overflow:hidden;
+}
+#desktop-header{
+  margin-bottom:28px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.os-title{
+  font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.3em;color:var(--c-dim);
+}
+.os-path{
+  font-family:var(--font-mono);font-size:0.6rem;color:rgba(0,212,255,0.3);
+  letter-spacing:0.1em;
+}
+
+/* ── DESKTOP ICON GRID ── */
+#icon-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:32px;
+  align-items:flex-start;
+  align-content:flex-start;
+}
+
+/* ── FOLDER ICON ── */
+.folder-icon{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  cursor:pointer;
+  width:100px;
+  padding:12px 8px;
+  border-radius:12px;
+  transition:background 0.2s ease, transform 0.15s ease;
+  user-select:none;
+  position:relative;
+}
+.folder-icon:hover{background:rgba(0,212,255,0.06);transform:translateY(-3px);}
+.folder-icon.selected{background:rgba(0,212,255,0.1);outline:1px solid rgba(0,212,255,0.3);}
+.folder-svg{width:64px;height:54px;position:relative;}
+.folder-icon .icon-label{
+  font-family:var(--font-body);font-size:0.72rem;color:var(--c-text);
+  text-align:center;line-height:1.3;
+}
+.folder-icon .icon-meta{
+  font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.4);
+  letter-spacing:0.1em;text-align:center;
+}
+
+/* ── WINDOW / OVERLAY ── */
+.os-window{
+  position:fixed;inset:52px 0 42px 0;
+  z-index:20;
+  display:flex;flex-direction:column;
+  background:rgba(2,11,20,0.92);backdrop-filter:blur(30px);
+  border:1px solid var(--c-border);
+  margin:16px 24px;
+  border-radius:12px;
+  overflow:hidden;
+  animation:windowIn 0.25s ease;
+}
+@keyframes windowIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+.window-titlebar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;
+  border-bottom:1px solid var(--c-border);
+  background:rgba(0,212,255,0.03);
+  flex-shrink:0;
+}
+.window-title{font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.2em;color:var(--c-cyan);}
+.window-controls{display:flex;gap:8px;align-items:center;}
+.wctrl{width:12px;height:12px;border-radius:50%;cursor:pointer;transition:transform 0.15s;}
+.wctrl:hover{transform:scale(1.2);}
+.wctrl.close{background:#ff5f57;}
+.wctrl.min{background:#ffbd2e;}
+.wctrl.max{background:#28c840;}
+.window-path{
+  font-family:var(--font-mono);font-size:0.55rem;
+  color:rgba(0,212,255,0.4);letter-spacing:0.1em;
+  padding:6px 20px;
+  border-bottom:1px solid rgba(0,212,255,0.07);
+  background:rgba(0,0,0,0.2);
+  flex-shrink:0;
+}
+.window-body{flex:1;overflow:auto;padding:28px;}
+
+/* ── FILE GRID ── */
+.file-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:20px;
+}
+.file-item{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  cursor:pointer;
+  padding:16px 10px;
+  border-radius:10px;
+  border:1px solid transparent;
+  transition:all 0.2s ease;
+  text-decoration:none;
+  position:relative;
+}
+.file-item:hover{
+  background:rgba(0,212,255,0.06);
+  border-color:rgba(0,212,255,0.2);
+  transform:translateY(-4px);
+}
+.file-item:hover .file-glow{opacity:1;}
+.file-glow{
+  position:absolute;inset:0;border-radius:10px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(0,212,255,0.15),transparent 70%);
+  opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+.file-icon-wrap{font-size:3.2rem;line-height:1;}
+.file-label{font-family:var(--font-body);font-size:0.75rem;color:var(--c-text);text-align:center;line-height:1.3;}
+.file-sublabel{font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.4);text-align:center;letter-spacing:0.08em;}
+
+/* ── PRESENTATION CARD (full list view) ── */
+.pres-card{
+  display:flex;align-items:center;gap:20px;
+  padding:18px 24px;
+  border:1px solid rgba(0,212,255,0.1);
+  border-radius:10px;
+  background:rgba(0,212,255,0.02);
+  cursor:pointer;
+  text-decoration:none;
+  transition:all 0.2s ease;
+  margin-bottom:12px;
+}
+.pres-card:hover{border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.06);}
+.pres-card-icon{font-size:2.4rem;flex-shrink:0;}
+.pres-card-info{flex:1;}
+.pres-card-title{font-family:var(--font-hud);font-size:0.85rem;letter-spacing:0.1em;color:var(--c-text);margin-bottom:4px;}
+.pres-card-sub{font-family:var(--font-mono);font-size:0.58rem;color:rgba(0,212,255,0.5);letter-spacing:0.08em;}
+.pres-card-tag{
+  font-family:var(--font-mono);font-size:0.5rem;letter-spacing:0.12em;
+  padding:3px 10px;border-radius:20px;
+  border:1px solid rgba(0,255,136,0.3);color:var(--c-green);
+  background:rgba(0,255,136,0.06);
+  white-space:nowrap;
+}
+.pres-card-arrow{font-size:1.2rem;color:var(--c-dim);}
+
+/* ── HIDDEN ── */
+.hidden{display:none!important;}
+
+/* ── LOGO ── */
+#nx-logo{position:fixed;top:15px;left:50%;transform:translateX(-50%);height:20px;z-index:20;opacity:0.9;pointer-events:none;border:none;}
+
+/* ── HOVER SCANLINE ON CARDS ── */
+@keyframes cardScan{0%{top:-100%}100%{top:200%}}
+.scan-line-card{
+  position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;
+}
+.scan-line-card::after{
+  content:'';position:absolute;left:0;right:0;height:40%;
+  background:linear-gradient(transparent,rgba(0,212,255,0.05),transparent);
+  animation:cardScan 3s linear infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div id="bg-grid"></div>
+<div id="bg-scan"></div>
+<div id="bg-vignette"></div>
+<div id="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div id="bg-scanline"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- HUD CORNERS -->
+<div class="hud-corner tl"></div>
+<div class="hud-corner tr"></div>
+<div class="hud-corner bl"></div>
+<div class="hud-corner br"></div>
+
+<!-- NEXTVERSE LOGO -->
+<img id="nx-logo" src="logo.png" alt="Nextverse">
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div class="left">
+    <div class="top-dot"></div>
+    <div class="top-dot green"></div>
+    <div class="top-dot violet"></div>
+    <span class="sys-label">NEXTVERSE OS</span>
+    <span class="sys-val">v1.0.0</span>
+  </div>
+  <div class="center">
+    <span id="clock-display">00:00:00</span>
+  </div>
+  <div class="right">
+    <span class="sys-label">SYS STATUS</span>
+    <span class="sys-val" style="color:var(--c-green);">● ONLINE</span>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+  <span class="bar-label">NEXTVERSE SYSTEMS · PRESENTATION HUB</span>
+  <span class="bar-label" id="bottom-path">~/desktop</span>
+  <span class="bar-label">© 2025 NEXTVERSE</span>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+  <div id="desktop-header">
+    <span class="os-title">NEXTVERSE OS · DESKTOP</span>
+    <span class="os-path" id="path-display">~/home/nextverse/desktop</span>
+  </div>
+  <div id="icon-grid">
+
+    <!-- PRESENTATIONS FOLDER -->
+    <div class="folder-icon" id="folder-presentations" onclick="openWindow('presentations')">
+      <svg class="folder-svg" viewBox="0 0 64 54" fill="none">
+        <defs>
+          <linearGradient id="fg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.4"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 12 C4 9 6 8 8 8 L24 8 L28 14 L56 14 C58 14 60 16 60 18 L60 46 C60 48 58 50 56 50 L8 50 C6 50 4 48 4 46 Z" fill="url(#fg1)" stroke="rgba(0,212,255,0.5)" stroke-width="1.5"/>
+        <path d="M4 20 L60 20" stroke="rgba(0,212,255,0.4)" stroke-width="1"/>
+        <rect x="20" y="30" width="24" height="3" rx="1.5" fill="rgba(0,212,255,0.3)"/>
+        <rect x="20" y="36" width="16" height="3" rx="1.5" fill="rgba(0,212,255,0.2)"/>
+      </svg>
+      <span class="icon-label">Presentations</span>
+      <span class="icon-meta">1 ITEM</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- WINDOW: PRESENTATIONS -->
+<div class="os-window hidden" id="win-presentations">
+  <div class="window-titlebar">
+    <div class="window-controls">
+      <div class="wctrl close" onclick="closeWindow('presentations')" title="Close"></div>
+      <div class="wctrl min" title="Minimize"></div>
+      <div class="wctrl max" title="Maximize"></div>
+    </div>
+    <span class="window-title">📁 PRESENTATIONS</span>
+    <span style="font-family:var(--font-mono);font-size:0.55rem;color:rgba(0,212,255,0.35);">1 ITEM</span>
+  </div>
+  <div class="window-path" id="win-pres-path">~/nextverse/desktop/presentations/</div>
+  <div class="window-body">
+
+    <!-- Presentation Card -->
+    <a class="pres-card" href="presentations/ai-school/index.html" target="_blank">
+      <div class="scan-line-card"></div>
+      <div class="pres-card-icon">🤖</div>
+      <div class="pres-card-info">
+        <div class="pres-card-title">AI AWARENESS · SCHOOL SESSION</div>
+        <div class="pres-card-sub">TARGET: CLASS 7–9 · DURATION: ~45 MIN · SLIDES: 21 · FORMAT: INTERACTIVE HTML</div>
+      </div>
+      <span class="pres-card-tag">● READY</span>
+      <span class="pres-card-arrow">→</span>
+    </a>
+
+  </div>
+</div>
+
+<script>
+// ── CLOCK ──
+function tick(){
+  const n = new Date();
+  const pad = v => String(v).padStart(2,'0');
+  document.getElementById('clock-display').textContent =
+    `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+tick(); setInterval(tick, 1000);
+
+// ── WINDOW MANAGER ──
+function openWindow(id){
+  document.getElementById('win-'+id).classList.remove('hidden');
+  document.getElementById('folder-'+id)?.classList.add('selected');
+  document.getElementById('path-display').textContent = `~/nextverse/desktop/${id}/`;
+  document.getElementById('bottom-path').textContent = `~/${id}`;
+}
+function closeWindow(id){
+  document.getElementById('win-'+id).classList.add('hidden');
+  document.getElementById('folder-'+id)?.classList.remove('selected');
+  document.getElementById('path-display').textContent = '~/home/nextverse/desktop';
+  document.getElementById('bottom-path').textContent = '~/desktop';
+}
+
+// ── PARTICLE NETWORK ──
+(()=>{
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  const N = 60, MAX_DIST = 130;
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  for(let i=0;i<N;i++) particles.push({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    vx:(Math.random()-.5)*0.4,vy:(Math.random()-.5)*0.4,
+    r:Math.random()*1.5+0.5
+  });
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<N;i++){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,212,255,0.5)';
+      ctx.fill();
+      for(let j=i+1;j<N;j++){
+        const q=particles[j];
+        const dx=p.x-q.x, dy=p.y-q.y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<MAX_DIST){
+          ctx.beginPath();
+          ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle=`rgba(0,212,255,${0.12*(1-d/MAX_DIST)})`;
+          ctx.lineWidth=0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
