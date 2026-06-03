@@ -661,6 +661,10 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 // username: kishan | password: password
 const VALID_USER='kishan';
 const VALID_HASH='5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+if(sessionStorage.getItem('nx_auth')==='1'){
+  document.getElementById('login-screen')?.remove();
+  document.getElementById('boot-screen')?.remove();
+}
 async function doLogin(){
   const user=document.getElementById('login-user').value.trim().toLowerCase();
   const pass=document.getElementById('login-pass').value;
@@ -670,12 +674,14 @@ async function doLogin(){
   const buf=await crypto.subtle.digest('SHA-256',enc.encode(pass));
   const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   if(user===VALID_USER&&hash===VALID_HASH){
+    sessionStorage.setItem('nx_auth','1');
     errEl.textContent='';
     const ls=document.getElementById('login-screen');
     ls.classList.add('fade-out');
     setTimeout(()=>{
-      ls.remove();
-      document.getElementById('boot-screen').classList.remove('hidden');
+      ls?.remove();
+      const bs=document.getElementById('boot-screen');
+      if(bs){ bs.classList.remove('hidden'); startBoot(); }
     },900);
   } else {
     errEl.textContent='ACCESS DENIED — INVALID CREDENTIALS.';
@@ -717,28 +723,30 @@ const BOOT_STEPS = [
   {msg:'APPLYING VISUAL OVERLAYS...', delay:400, pct:90},
   {msg:'SYSTEM READY.', delay:300, pct:100},
 ];
-const logEl=document.getElementById('boot-log');
-const fillEl=document.getElementById('boot-fill');
-const pctEl=document.getElementById('boot-pct');
-let bootTime=1800;
-BOOT_STEPS.forEach((step,i)=>{
-  bootTime+=step.delay;
-  setTimeout(()=>{
-    const line=document.createElement('div');
-    line.className='boot-log-line';
-    line.innerHTML=`<span class="ok">✓</span><span>${step.msg}</span>`;
-    logEl.appendChild(line);
-    fillEl.style.width=step.pct+'%';
-    pctEl.textContent=step.pct+'%';
-    if(step.pct===100){
-      setTimeout(()=>{
-        const bs=document.getElementById('boot-screen');
-        bs.classList.add('fade-out');
-        setTimeout(()=>bs.remove(),900);
-      },600);
-    }
-  },bootTime);
-});
+function startBoot(){
+  const logEl=document.getElementById('boot-log');
+  const fillEl=document.getElementById('boot-fill');
+  const pctEl=document.getElementById('boot-pct');
+  let bootTime=1800;
+  BOOT_STEPS.forEach((step,i)=>{
+    bootTime+=step.delay;
+    setTimeout(()=>{
+      const line=document.createElement('div');
+      line.className='boot-log-line';
+      line.innerHTML=`<span class="ok">✓</span><span>${step.msg}</span>`;
+      logEl.appendChild(line);
+      fillEl.style.width=step.pct+'%';
+      pctEl.textContent=step.pct+'%';
+      if(step.pct===100){
+        setTimeout(()=>{
+          const bs=document.getElementById('boot-screen');
+          bs.classList.add('fade-out');
+          setTimeout(()=>bs?.remove(),900);
+        },600);
+      }
+    },bootTime);
+  });
+}
 
 // ── SOUND TOGGLE (oscillator drone) ──
 let audioCtx=null,soundOn=false,mainGain=null,oscs=[];
