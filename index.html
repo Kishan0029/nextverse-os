@@ -741,30 +741,51 @@ BOOT_STEPS.forEach((step,i)=>{
 });
 
 // ── SOUND TOGGLE (oscillator drone) ──
-let audioCtx=null,soundOn=false,gainNode=null,oscs=[];
-function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
-function startAmbient(){
-  initAudio();if(audioCtx.state==='suspended')audioCtx.resume();
-  gainNode=audioCtx.createGain();gainNode.gain.setValueAtTime(0,audioCtx.currentTime);
-  gainNode.gain.linearRampToValueAtTime(0.04,audioCtx.currentTime+2);
-  gainNode.connect(audioCtx.destination);
+let audioCtx=null,soundOn=false,mainGain=null,oscs=[];
+function initAudio(){
+  if(!audioCtx){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    audioCtx=new AC();
+  }
+}
+async function startAmbient(){
+  initAudio();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+  if(mainGain){ try{mainGain.disconnect();}catch(e){} }
+  mainGain=audioCtx.createGain();
+  mainGain.gain.setValueAtTime(0,audioCtx.currentTime);
+  mainGain.gain.linearRampToValueAtTime(0.06,audioCtx.currentTime+2);
+  mainGain.connect(audioCtx.destination);
+  
+  oscs.forEach(o=>{try{o.stop();}catch(e){}});
+  oscs=[];
   [[55,0],[110,0.02],[220,-0.02]].forEach(([freq,det])=>{
     const o=audioCtx.createOscillator();
     o.type='sine';o.frequency.value=freq+det;
-    const g=audioCtx.createGain();g.gain.value=0.4;
-    o.connect(g);g.connect(gainNode);o.start();oscs.push(o);
+    const g=audioCtx.createGain();g.gain.value=0.3;
+    o.connect(g);g.connect(mainGain);o.start();oscs.push(o);
   });
 }
 function stopAmbient(){
-  if(gainNode){gainNode.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1.5);
-  setTimeout(()=>{oscs.forEach(o=>{try{o.stop();}catch(e){}});oscs=[];},1600);}
+  if(mainGain){
+    const now=audioCtx.currentTime;
+    mainGain.gain.cancelScheduledValues(now);
+    mainGain.gain.setValueAtTime(mainGain.gain.value,now);
+    mainGain.gain.linearRampToValueAtTime(0,now+1);
+    setTimeout(()=>{oscs.forEach(o=>{try{o.stop();}catch(e){}});oscs=[];},1200);
+  }
 }
-function toggleSound(){
+async function toggleSound(){
   soundOn=!soundOn;
   const btn=document.getElementById('sound-btn');
   const ico=document.getElementById('ctx-sound-icon');
-  if(soundOn){startAmbient();btn.textContent='🔊';btn.classList.add('active');if(ico)ico.textContent='🔊';}
-  else{stopAmbient();btn.textContent='🔇';btn.classList.remove('active');if(ico)ico.textContent='🔇';}
+  if(soundOn){
+    await startAmbient();
+    btn.textContent='🔊';btn.classList.add('active');if(ico)ico.textContent='🔊';
+  } else {
+    stopAmbient();
+    btn.textContent='🔇';btn.classList.remove('active');if(ico)ico.textContent='🔇';
+  }
 }
 
 // ── CONTEXT MENU ──
