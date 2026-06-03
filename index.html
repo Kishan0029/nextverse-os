@@ -175,6 +175,36 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 .scan-line-card{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;}
 .scan-line-card::after{content:'';position:absolute;left:0;right:0;height:40%;background:linear-gradient(transparent,rgba(0,212,255,0.05),transparent);animation:cardScan 3s linear infinite;}
 
+/* ── BOOT SCREEN ── */
+#boot-screen{
+  position:fixed;inset:0;z-index:999;
+  background:#020b14;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  transition:opacity 0.8s ease;
+}
+#boot-screen.fade-out{opacity:0;pointer-events:none;}
+.boot-logo{height:40px;opacity:0;animation:bootFadeIn 0.8s ease 0.3s forwards;filter:drop-shadow(0 0 20px rgba(0,212,255,0.6));}
+.boot-os-name{font-family:var(--font-hud);font-size:clamp(1.2rem,4vw,2rem);letter-spacing:0.4em;color:var(--c-cyan);opacity:0;animation:bootFadeIn 0.8s ease 0.7s forwards;}
+.boot-tagline{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(0,212,255,0.4);opacity:0;animation:bootFadeIn 0.6s ease 1.1s forwards;}
+.boot-log{width:min(420px,85vw);display:flex;flex-direction:column;gap:6px;opacity:0;animation:bootFadeIn 0.5s ease 1.4s forwards;}
+.boot-log-line{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.08em;color:rgba(0,212,255,0.5);display:flex;align-items:center;gap:8px;}
+.boot-log-line .ok{color:var(--c-green);}
+.boot-log-line .loading{color:var(--c-cyan);animation:blink 0.8s infinite;}
+.boot-progress-wrap{width:min(420px,85vw);display:flex;flex-direction:column;gap:8px;opacity:0;animation:bootFadeIn 0.5s ease 1.6s forwards;}
+.boot-progress-bar{height:2px;background:rgba(0,212,255,0.12);border-radius:2px;overflow:hidden;}
+.boot-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--c-violet),var(--c-cyan));border-radius:2px;transition:width 0.4s ease;}
+.boot-progress-label{font-family:var(--font-mono);font-size:0.5rem;letter-spacing:0.12em;color:rgba(0,212,255,0.4);display:flex;justify-content:space-between;}
+#boot-enter-btn{
+  display:none;
+  padding:12px 40px;border-radius:6px;border:1px solid var(--c-cyan);
+  background:rgba(0,212,255,0.06);color:var(--c-cyan);
+  font-family:var(--font-hud);font-size:0.75rem;letter-spacing:0.3em;
+  cursor:pointer;transition:all 0.2s ease;
+  box-shadow:0 0 20px rgba(0,212,255,0.15);
+}
+#boot-enter-btn:hover{background:rgba(0,212,255,0.15);box-shadow:0 0 40px rgba(0,212,255,0.3);}
+@keyframes bootFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
 /* ── HIDDEN ── */
 .hidden{display:none!important;}
 
@@ -240,6 +270,19 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 <div id="bg-scanline"></div>
 <canvas id="particle-canvas"></canvas>
 
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+  <img class="boot-logo" src="Nextverse Logo.png" alt="Nextverse">
+  <div class="boot-os-name">NEXTVERSE OS</div>
+  <div class="boot-tagline">PRESENTATION · PORTFOLIO · HUB</div>
+  <div class="boot-log" id="boot-log"></div>
+  <div class="boot-progress-wrap" id="boot-progress-wrap">
+    <div class="boot-progress-label"><span>LOADING MODULES</span><span id="boot-pct">0%</span></div>
+    <div class="boot-progress-bar"><div class="boot-progress-fill" id="boot-fill"></div></div>
+  </div>
+  <button id="boot-enter-btn" onclick="enterOS()">⟶ &nbsp;ENTER SYSTEM</button>
+</div>
+
 <!-- HUD CORNERS -->
 <div class="hud-corner tl"></div>
 <div class="hud-corner tr"></div>
@@ -300,6 +343,25 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
       <span class="icon-meta">1 ITEM</span>
     </div>
 
+    <!-- PORTFOLIO FOLDER -->
+    <div class="folder-icon" id="folder-portfolio" onclick="openWindow('portfolio')">
+      <svg class="folder-svg" viewBox="0 0 64 54" fill="none">
+        <defs>
+          <linearGradient id="fg2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00ff88" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.4"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 12 C4 9 6 8 8 8 L24 8 L28 14 L56 14 C58 14 60 16 60 18 L60 46 C60 48 58 50 56 50 L8 50 C6 50 4 48 4 46 Z" fill="url(#fg2)" stroke="rgba(0,255,136,0.5)" stroke-width="1.5"/>
+        <path d="M4 20 L60 20" stroke="rgba(0,255,136,0.4)" stroke-width="1"/>
+        <rect x="18" y="29" width="8" height="10" rx="1" fill="rgba(0,255,136,0.3)"/>
+        <rect x="28" y="27" width="8" height="12" rx="1" fill="rgba(0,255,136,0.4)"/>
+        <rect x="38" y="31" width="8" height="8" rx="1" fill="rgba(0,255,136,0.2)"/>
+      </svg>
+      <span class="icon-label">Portfolio</span>
+      <span class="icon-meta">3 ITEMS</span>
+    </div>
+
   </div>
 </div>
 
@@ -334,6 +396,59 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   </div>
 </div>
 
+<!-- WINDOW: PORTFOLIO -->
+<div class="os-window hidden" id="win-portfolio">
+  <div class="window-titlebar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="window-controls">
+        <div class="wctrl close" onclick="closeWindow('portfolio')" title="Close"></div>
+        <div class="wctrl min" title="Minimize"></div>
+        <div class="wctrl max" title="Maximize"></div>
+      </div>
+      <div class="win-back" onclick="closeWindow('portfolio')">← BACK</div>
+    </div>
+    <span class="window-title">📁 PORTFOLIO</span>
+    <span style="font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.35);">3 ITEMS</span>
+  </div>
+  <div class="window-path">~/nextverse/desktop/portfolio/</div>
+  <div class="window-body">
+
+    <a class="pres-card" href="https://gonextverse.in" target="_blank">
+      <div class="scan-line-card"></div>
+      <div class="pres-card-icon">🌐</div>
+      <div class="pres-card-info">
+        <div class="pres-card-title">NEXTVERSE WEBSITE</div>
+        <div class="pres-card-sub">gonextverse.in · AI & WEB DEVELOPMENT AGENCY · LIVE</div>
+      </div>
+      <span class="pres-card-tag" style="border-color:rgba(0,212,255,0.3);color:var(--c-cyan);background:rgba(0,212,255,0.06);">● LIVE</span>
+      <span class="pres-card-arrow">→</span>
+    </a>
+
+    <a class="pres-card" href="presentations/ai-school/index.html" target="_blank">
+      <div class="scan-line-card"></div>
+      <div class="pres-card-icon">🤖</div>
+      <div class="pres-card-info">
+        <div class="pres-card-title">AI SCHOOL PRESENTATION</div>
+        <div class="pres-card-sub">INTERACTIVE JARVIS-STYLE DECK · 21 SLIDES · CLASS 7-9</div>
+      </div>
+      <span class="pres-card-tag">● READY</span>
+      <span class="pres-card-arrow">→</span>
+    </a>
+
+    <a class="pres-card" href="https://gonextverse.in" target="_blank">
+      <div class="scan-line-card"></div>
+      <div class="pres-card-icon">🚀</div>
+      <div class="pres-card-info">
+        <div class="pres-card-title">NEXTVERSE OS</div>
+        <div class="pres-card-sub">THIS SYSTEM · presentation.gonextverse.in · v1.0.0</div>
+      </div>
+      <span class="pres-card-tag" style="border-color:rgba(124,58,237,0.4);color:#a78bfa;background:rgba(124,58,237,0.08);">● YOU ARE HERE</span>
+      <span class="pres-card-arrow">→</span>
+    </a>
+
+  </div>
+</div>
+
 <script>
 // ── CLOCK ──
 function tick(){
@@ -354,6 +469,40 @@ function closeWindow(id){
   document.getElementById('folder-'+id)?.classList.remove('selected');
   document.getElementById('path-display').textContent='~/home/nextverse/desktop';
   document.getElementById('bottom-path').textContent='~/desktop';
+}
+
+// ── BOOT SEQUENCE ──
+const BOOT_STEPS = [
+  {msg:'INITIALIZING CORE KERNEL...', delay:200, pct:15},
+  {msg:'LOADING UI MODULES...', delay:600, pct:35},
+  {msg:'MOUNTING FILE SYSTEM...', delay:400, pct:55},
+  {msg:'ESTABLISHING NETWORK LINK...', delay:500, pct:75},
+  {msg:'APPLYING VISUAL OVERLAYS...', delay:400, pct:90},
+  {msg:'SYSTEM READY.', delay:300, pct:100},
+];
+const logEl=document.getElementById('boot-log');
+const fillEl=document.getElementById('boot-fill');
+const pctEl=document.getElementById('boot-pct');
+const enterBtn=document.getElementById('boot-enter-btn');
+let bootTime=1800;
+BOOT_STEPS.forEach((step,i)=>{
+  bootTime+=step.delay;
+  setTimeout(()=>{
+    const line=document.createElement('div');
+    line.className='boot-log-line';
+    line.innerHTML=`<span class="ok">✓</span><span>${step.msg}</span>`;
+    logEl.appendChild(line);
+    fillEl.style.width=step.pct+'%';
+    pctEl.textContent=step.pct+'%';
+    if(step.pct===100){
+      setTimeout(()=>{enterBtn.style.display='block';},400);
+    }
+  },bootTime);
+});
+function enterOS(){
+  const bs=document.getElementById('boot-screen');
+  bs.classList.add('fade-out');
+  setTimeout(()=>bs.remove(),900);
 }
 
 // ── PARTICLE NETWORK ──
