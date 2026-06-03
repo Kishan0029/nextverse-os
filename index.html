@@ -316,6 +316,34 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
 #sound-btn,#lock-btn{font-family:var(--font-mono);font-size:0.7rem;color:rgba(0,212,255,0.5);cursor:pointer;padding:4px 8px;border-radius:4px;transition:color 0.2s ease;border:none;background:none;}
 #sound-btn:hover,#lock-btn:hover{color:var(--c-cyan);}
 #sound-btn.active{color:var(--c-cyan);}
+
+/* ── PHASE 4: WEATHER WIDGET ── */
+#weather-widget{
+  position:absolute;bottom:20px;right:24px;
+  display:flex;flex-direction:column;gap:6px;
+  background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);
+  border-radius:10px;padding:12px 16px;min-width:160px;
+  font-family:var(--font-mono);
+}
+.wx-temp{font-family:var(--font-hud);font-size:1.6rem;color:var(--c-cyan);line-height:1;}
+.wx-desc{font-size:0.52rem;letter-spacing:0.12em;color:rgba(0,212,255,0.6);}
+.wx-meta{font-size:0.48rem;letter-spacing:0.08em;color:rgba(0,212,255,0.35);}
+
+/* ── PHASE 4: TERMINAL ── */
+.term-body{
+  background:#000;font-family:var(--font-mono);font-size:0.72rem;
+  padding:16px;height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:4px;
+}
+.term-line{color:var(--c-green);white-space:pre-wrap;word-break:break-all;}
+.term-line.err{color:#ff5f57;}
+.term-line.sys{color:rgba(0,212,255,0.5);}
+.term-input-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.term-prompt{color:var(--c-cyan);flex-shrink:0;}
+#term-input{
+  background:transparent;border:none;outline:none;
+  color:var(--c-green);font-family:var(--font-mono);font-size:0.72rem;
+  flex:1;caret-color:var(--c-cyan);
+}
 </style>
 </head>
 <body>
@@ -342,7 +370,7 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
     <div class="boot-progress-label"><span>LOADING MODULES</span><span id="boot-pct">0%</span></div>
     <div class="boot-progress-bar"><div class="boot-progress-fill" id="boot-fill"></div></div>
   </div>
-  <button id="boot-enter-btn" onclick="enterOS()">⟶ &nbsp;ENTER SYSTEM</button>
+
 </div>
 
 <!-- HUD CORNERS -->
@@ -426,7 +454,31 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
       <span class="icon-meta">3 ITEMS</span>
     </div>
 
+    <!-- TERMINAL FOLDER -->
+    <div class="folder-icon" id="folder-terminal" onclick="openWindow('terminal')">
+      <svg class="folder-svg" viewBox="0 0 64 54" fill="none">
+        <defs>
+          <linearGradient id="fg3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00ff88" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#00ff88" stop-opacity="0.2"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 12 C4 9 6 8 8 8 L24 8 L28 14 L56 14 C58 14 60 16 60 18 L60 46 C60 48 58 50 56 50 L8 50 C6 50 4 48 4 46 Z" fill="url(#fg3)" stroke="rgba(0,255,136,0.4)" stroke-width="1.5"/>
+        <path d="M4 20 L60 20" stroke="rgba(0,255,136,0.3)" stroke-width="1"/>
+        <text x="12" y="38" font-family="monospace" font-size="12" fill="rgba(0,255,136,0.8)">_&gt; </text>
+      </svg>
+      <span class="icon-label">Terminal</span>
+      <span class="icon-meta">CLI</span>
+    </div>
+
   </div>
+</div>
+
+<!-- WEATHER WIDGET (inside desktop) -->
+<div id="weather-widget">
+  <div class="wx-temp" id="wx-temp">—°C</div>
+  <div class="wx-desc" id="wx-desc">LOCATING...</div>
+  <div class="wx-meta" id="wx-meta">NEXTVERSE WEATHER SYS</div>
 </div>
 
 <!-- WINDOW: PRESENTATIONS -->
@@ -507,6 +559,28 @@ body{cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"
   </div>
 </div>
 
+<!-- TERMINAL WINDOW -->
+<div class="os-window hidden" id="win-terminal">
+  <div class="window-titlebar">
+    <div class="window-controls">
+      <div class="wctrl close" onclick="closeWindow('terminal')" title="Close"></div>
+      <div class="wctrl min" title="Minimize"></div>
+      <div class="wctrl max" title="Maximize"></div>
+    </div>
+    <span class="window-title">💻 TERMINAL — NEXTVERSE OS</span>
+    <span style="font-family:var(--font-mono);font-size:0.5rem;color:rgba(0,212,255,0.35);">v1.0</span>
+  </div>
+  <div class="window-path">~/nextverse/terminal/</div>
+  <div class="term-body" id="term-body">
+    <div class="term-line sys">NEXTVERSE OS TERMINAL v1.0 — Type 'help' for commands.</div>
+    <div class="term-line sys">────────────────────────────────</div>
+    <div class="term-input-row">
+      <span class="term-prompt">nextverse@os:~$</span>
+      <input id="term-input" type="text" autocomplete="off" spellcheck="false" onkeydown="handleTermKey(event)">
+    </div>
+  </div>
+</div>
+
 <!-- LOCK SCREEN -->
 <div id="lock-screen" class="hidden">
   <div class="lock-time" id="lock-clock">00:00</div>
@@ -568,7 +642,6 @@ const BOOT_STEPS = [
 const logEl=document.getElementById('boot-log');
 const fillEl=document.getElementById('boot-fill');
 const pctEl=document.getElementById('boot-pct');
-const enterBtn=document.getElementById('boot-enter-btn');
 let bootTime=1800;
 BOOT_STEPS.forEach((step,i)=>{
   bootTime+=step.delay;
@@ -580,15 +653,14 @@ BOOT_STEPS.forEach((step,i)=>{
     fillEl.style.width=step.pct+'%';
     pctEl.textContent=step.pct+'%';
     if(step.pct===100){
-      setTimeout(()=>{enterBtn.style.display='block';},400);
+      setTimeout(()=>{
+        const bs=document.getElementById('boot-screen');
+        bs.classList.add('fade-out');
+        setTimeout(()=>bs.remove(),900);
+      },600);
     }
   },bootTime);
 });
-function enterOS(){
-  const bs=document.getElementById('boot-screen');
-  bs.classList.add('fade-out');
-  setTimeout(()=>bs.remove(),900);
-}
 
 // ── SOUND TOGGLE (oscillator drone) ──
 let audioCtx=null,soundOn=false,gainNode=null,oscs=[];
@@ -725,6 +797,68 @@ document.querySelectorAll('.os-window').forEach(win=>{
   }
   draw();
 })();
+
+// ── PHASE 4: WEATHER WIDGET ──
+(()=>{
+  const WMO={0:'CLEAR SKY',1:'MAINLY CLEAR',2:'PARTLY CLOUDY',3:'OVERCAST',45:'FOGGY',48:'FOGGY',51:'DRIZZLE',61:'RAIN',71:'SNOW',80:'SHOWERS',95:'THUNDERSTORM',99:'THUNDERSTORM'};
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const {latitude:lat,longitude:lon}=pos.coords;
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+        .then(r=>r.json())
+        .then(d=>{
+          const w=d.current_weather;
+          document.getElementById('wx-temp').textContent=Math.round(w.temperature)+'°C';
+          document.getElementById('wx-desc').textContent=WMO[w.weathercode]||'UNKNOWN';
+          document.getElementById('wx-meta').textContent=`WIND ${Math.round(w.windspeed)} KM/H · LIVE`;
+        }).catch(()=>{document.getElementById('wx-desc').textContent='UNAVAILABLE';});
+    },()=>{document.getElementById('wx-desc').textContent='LOCATION DENIED';});
+  } else {document.getElementById('wx-desc').textContent='NOT SUPPORTED';}
+})();
+
+// ── PHASE 4: TERMINAL ──
+const CMDS={
+  help:()=>['AVAILABLE COMMANDS:','  help        — show this list','  about       — about Nextverse OS','  whoami      — identify current user','  ls          — list desktop items','  open [name] — open a folder (presentations/portfolio/terminal)','  date        — show current date & time','  clear       — clear terminal'],
+  about:()=>['NEXTVERSE OS v1.0.0','Built by Kishan — Founder, Nextverse','AI · Web Development · Presentations','gonextverse.in'],
+  whoami:()=>['AUTHENTICATED USER: KISHAN','ROLE: FOUNDER · NEXTVERSE','CLEARANCE: ADMIN'],
+  ls:()=>['~/nextverse/desktop/','  📁 presentations/','  📁 portfolio/','  💻 terminal/','  🌤️  weather.widget'],
+  date:()=>[new Date().toString()],
+  clear:()=>null,
+};
+function handleTermKey(e){
+  if(e.key!=='Enter')return;
+  const inp=document.getElementById('term-input');
+  const raw=inp.value.trim();inp.value='';
+  const body=document.getElementById('term-body');
+  const inputRow=body.querySelector('.term-input-row');
+  // print user input
+  const userLine=document.createElement('div');
+  userLine.className='term-line';
+  userLine.textContent=`nextverse@os:~$ ${raw}`;
+  body.insertBefore(userLine,inputRow);
+  const parts=raw.toLowerCase().split(' ');
+  const cmd=parts[0];
+  if(cmd==='clear'){body.querySelectorAll('.term-line:not(.sys)').forEach(l=>l.remove());}
+  else if(cmd==='open'){
+    const target=parts[1];
+    if(['presentations','portfolio','terminal'].includes(target)){openWindow(target);addTermLine('OPENING: '+target.toUpperCase()+'...',false);}
+    else addTermLine('open: no such folder: '+target,true);
+  } else if(CMDS[cmd]){
+    CMDS[cmd]().forEach(l=>addTermLine(l,false));
+  } else if(cmd===''){}else{
+    addTermLine(`command not found: ${cmd}. Try 'help'.`,true);
+  }
+  body.scrollTop=body.scrollHeight;
+  function addTermLine(txt,isErr){
+    const l=document.createElement('div');l.className='term-line'+(isErr?' err':'');
+    l.textContent=txt;body.insertBefore(l,inputRow);}
+}
+// focus terminal input when window opens
+const _origOpen=openWindow;
+window.openWindow=function(id){
+  _origOpen(id);
+  if(id==='terminal')setTimeout(()=>document.getElementById('term-input')?.focus(),100);
+};
 </script>
 </body>
 </html>
